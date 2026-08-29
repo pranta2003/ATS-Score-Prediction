@@ -10,6 +10,7 @@ The system uses **Sentence-BERT (SBERT)** to convert the resume and job descript
 
 ## 🔄 Project Pipeline
 
+```
 Resume
    │
    ▼
