@@ -132,3 +132,19 @@ A Gradio interface allows users to enter a **resume** and **job description** an
 The main implementation is available in:
 
 `ats-score-prediction-project.ipynb`
+
+## Interface
+
+A Gradio interface allows users to enter a **resume** and **job description** and receive a predicted numerical ATS score.
+
+## Repository
+
+The main implementation is available in:
+
+`ats-score-prediction-project.ipynb`
+
+## 📄 License
+
+This project is licensed under the **MIT License**.
+
+See the [LICENSE](LICENSE) file for details.
