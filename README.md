@@ -1,4 +1,4 @@
-```
+
 # ATS Score Prediction using Machine Learning
 
 A machine learning regression system that predicts a **numerical ATS score** by analyzing the semantic relationship between a resume and a job description.
@@ -9,9 +9,10 @@ The project uses the `resume-ats-score-v1-en` dataset, where `resume` and `job_d
 
 The system uses **Sentence-BERT (SBERT)** to convert the resume and job description into numerical embeddings. These embeddings are concatenated and provided to regression models for ATS score prediction.
 
+
+
 ## 🔄 Project Pipeline
-
-
+```
 Resume
    │
    ▼
