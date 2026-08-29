@@ -10,7 +10,6 @@ The system uses **Sentence-BERT (SBERT)** to convert the resume and job descript
 
 ## 🔄 Project Pipeline
 
-```text
 Resume
    │
    ▼
@@ -56,7 +55,7 @@ Sentence-BERT
           Final XGBoost Model
                    ▼
            Predicted ATS Score
-```
+
 Pipeline Summary
 
 Resume + Job Description
