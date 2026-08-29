@@ -108,3 +108,75 @@ Sentence-BERT                │
        Prediction Averaging
                 ▼
         Final ATS Score
+```
+🧹 Text Preprocessing
+
+The resume and job description are cleaned independently before generating embeddings.
+
+The preprocessing includes:
+
+Converting text to lowercase
+Removing URLs
+Removing HTML content
+Removing email addresses
+Removing phone numbers
+Removing unnecessary symbols
+Preserving important programming and technical keywords such as:
+C++
+C#
+.NET
+Node.js
+
+The purpose of preprocessing is to reduce irrelevant textual noise while preserving information that may be important for matching a candidate with a job description.
+
+
+🧠 Sentence-BERT Feature Extraction
+
+The project uses:
+
+sentence-transformers/all-MiniLM-L6-v2
+
+Each text input is independently converted into a 384-dimensional semantic embedding.
+
+Therefore:
+
+Resume                → 384 features
+Job Description       → 384 features
+                         ───────────
+Total                 → 768 features
+
+The two embeddings are concatenated to form the final feature vector used by the regression models.
+
+This allows the models to work with semantic representations rather than relying only on individual words or manually engineered features.
+
+🤖 Regression Models
+
+Four regression models were evaluated as individual benchmark models:
+
+1. Linear Regression
+
+Provides a simple linear relationship between the SBERT feature representation and the ATS score.
+
+2. KNN Regressor
+
+Predicts the ATS score based on the nearest observations in the embedding feature space.
+
+3. Random Forest Regressor
+
+Uses multiple decision trees and aggregates their predictions. Random Forest already incorporates a bagging mechanism internally.
+
+4. XGBoost Regressor
+
+A boosting-based regression algorithm that builds an ensemble of decision trees sequentially.
+
+
+📏 Evaluation Metrics
+
+Since ATS score prediction is a regression problem, the following metrics are used:
+
+MAE (Mean Absolute Error)
+RMSE (Root Mean Squared Error)
+R² (Coefficient of Determination)
+
+Lower MAE and RMSE indicate better prediction performance, while a higher R² indicates better explanatory performance.
+
