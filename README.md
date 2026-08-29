@@ -56,6 +56,7 @@ Sentence-BERT
           Final XGBoost Model
                    ▼
            Predicted ATS Score
+```
 Pipeline Summary
 
 Resume + Job Description
