@@ -1,114 +1,47 @@
-import re
-import joblib
+import os
 import numpy as np
+import joblib
 import gradio as gr
 
-from bs4 import BeautifulSoup
 from sentence_transformers import SentenceTransformer
 
 
-# -----------------------------------
-# Load trained Bagging models
-# -----------------------------------
-
-models = joblib.load("ats_bagging_models.pkl")
-
-bag_lr = models["bag_lr"]
-bag_knn = models["bag_knn"]
-
-
-# -----------------------------------
-# Load Sentence-BERT
-# -----------------------------------
+# ==========================================
+# Load models
+# ==========================================
 
 sbert_model = SentenceTransformer(
     "sentence-transformers/all-MiniLM-L6-v2"
 )
 
-
-# -----------------------------------
-# Text Cleaning
-# -----------------------------------
-
-def clean_text(text):
-
-    text = str(text).lower()
-
-    # Remove URLs
-    text = re.sub(r"http\S+|www\S+", " ", text)
-
-    # Remove HTML
-    text = BeautifulSoup(text, "html.parser").get_text(" ")
-
-    # Remove emails
-    text = re.sub(r"\S+@\S+", " ", text)
-
-    # Remove phone numbers
-    text = re.sub(
-        r"\+?\d[\d\s().-]{7,}\d",
-        " ",
-        text
-    )
-
-    # Normalize whitespace
-    text = re.sub(r"\s+", " ", text).strip()
-
-    return text
+xgb_model = joblib.load("ats_xgboost_model.pkl")
 
 
-# -----------------------------------
-# ATS Prediction
-# -----------------------------------
+# ==========================================
+# Prediction function
+# ==========================================
 
 def predict_ats(resume, job_description):
 
-    if not resume or not job_description:
-        return 0.0
+    # Create SBERT embeddings
+    resume_embedding = sbert_model.encode([resume])
+    job_embedding = sbert_model.encode([job_description])
 
-    # Clean inputs
-    resume_clean = clean_text(resume)
-    job_clean = clean_text(job_description)
-
-    # Generate SBERT embeddings
-    resume_embedding = sbert_model.encode(
-        resume_clean
+    # Combine resume + job description features
+    combined_features = np.concatenate(
+        [resume_embedding, job_embedding],
+        axis=1
     )
 
-    job_embedding = sbert_model.encode(
-        job_clean
-    )
+    # XGBoost prediction
+    ats_score = xgb_model.predict(combined_features)[0]
 
-    # 384 + 384 = 768 features
-    combined_features = np.concatenate([
-        resume_embedding,
-        job_embedding
-    ])
-
-    combined_features = combined_features.reshape(
-        1, -1
-    )
-
-    # Bagged Linear Regression
-    lr_prediction = bag_lr.predict(
-        combined_features
-    )[0]
-
-    # Bagged KNN
-    knn_prediction = bag_knn.predict(
-        combined_features
-    )[0]
-
-    # Average predictions
-    ats_score = (
-        lr_prediction + knn_prediction
-    ) / 2
-
-    return round(float(ats_score), 2)
+    return float(ats_score)
 
 
-# -----------------------------------
-# Gradio Interface
-# -----------------------------------
+# ==========================================
+# Gradio interface
+# ==========================================
 
 interface = gr.Interface(
     fn=predict_ats,
@@ -140,5 +73,7 @@ interface = gr.Interface(
 )
 
 
-if __name__ == "__main__":
-    interface.launch()
+interface.launch(
+    server_name="0.0.0.0",
+    server_port=int(os.environ.get("PORT", 7860))
+)

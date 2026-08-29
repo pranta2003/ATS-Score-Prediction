@@ -1,6 +1,6 @@
-gradio
-sentence-transformers
-scikit-learn
 numpy
 joblib
-beautifulsoup4
+gradio
+sentence-transformers
+xgboost
+scikit-learn
