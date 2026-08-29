@@ -4,3 +4,5 @@ gradio
 sentence-transformers
 xgboost
 scikit-learn
+torch==2.12.1
+--extra-index-url https://download.pytorch.org/whl/cpu
