@@ -58,8 +58,9 @@ Sentence-BERT
           Final XGBoost Model
                    ▼
            Predicted ATS Score
+```
 
-Pipeline Summary
+## Pipeline Summary
 
 Resume + Job Description
 ↓
@@ -79,7 +80,7 @@ Final XGBoost Model
 ↓
 Predicted ATS Score
 
-Models Evaluated
+## Models Evaluated
 Linear Regression
 KNN Regressor
 Random Forest Regressor
@@ -88,7 +89,7 @@ Cross-Validation Results
 
 The models were evaluated using 5-fold cross-validation.
 
-Model	Average Validation R²
+## Model	Average Validation R²
 Linear Regression	0.1233
 KNN	0.2032
 Random Forest	0.3390
@@ -101,7 +102,7 @@ Final XGBoost Model
 
 After model evaluation, XGBoost was selected as the final individual prediction model.
 
-Final Test Results
+## Final Test Results
 Metric	Score
 Training R²	0.8670
 Test R²	0.3900
@@ -121,13 +122,11 @@ max_depth = 4
 learning_rate = 0.1
 colsample_bytree = 1.0
 
-The best cross-validation R² obtained during the tuning process was:
-
-0.2808
+The best cross-validation R² obtained during the tuning process was: 0.2808
 
 The final model selection was based on the overall model evaluation and validation results, with XGBoost providing the strongest individual-model performance.
 
-Evaluation Metrics
+## Evaluation Metrics
 
 The project uses standard regression metrics:
 
@@ -143,7 +142,8 @@ Sentence-Transformers
 XGBoost
 Joblib
 Gradio
-💻 Gradio Interface
+
+## 💻 Gradio Interface
 
 The project includes a Gradio web interface where users can enter:
 
@@ -152,7 +152,7 @@ A job description
 
 The system processes both text inputs using Sentence-BERT and uses the trained XGBoost model to generate a predicted numerical ATS score.
 
-🚀 Deployment
+## 🚀 Deployment
 
 The Gradio application is deployed as a web service using Render.
 
@@ -165,7 +165,7 @@ and loads the trained model from:
 ats_xgboost_model.pkl
 
 The application automatically uses the port provided by the deployment environment.
-
+```
 📁 Project Structure
 ATS-Score-Prediction/
 │
@@ -175,11 +175,13 @@ ATS-Score-Prediction/
 ├── requirements.txt
 ├── .python-version
 └── README.md
-📓 Main Notebook
+```
+## 📓 Main Notebook
 
 The complete machine learning workflow, including data processing, feature generation, model training, evaluation, cross-validation, and model selection, is available in:
 
 ats-score-prediction-project.ipynb
-📄 License
+
+## 📄 License
 
 This project is licensed under the MIT License.
