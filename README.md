@@ -165,8 +165,9 @@ and loads the trained model from:
 ats_xgboost_model.pkl
 
 The application automatically uses the port provided by the deployment environment.
+
+## 📁 Project Structure
 ```
-📁 Project Structure
 ATS-Score-Prediction/
 │
 ├── app.py
