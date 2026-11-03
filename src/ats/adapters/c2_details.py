@@ -69,3 +69,4 @@ class C2DetailsAdapter(BaseDatasetAdapter):
         df["source_dataset"] = self.name
 
         return df
+

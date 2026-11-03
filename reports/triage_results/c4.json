@@ -1,0 +1,206 @@
+{
+  "dataset_key": "c4",
+  "metadata": {
+    "repo_id": "surendra365/recruitment-dataset",
+    "license": "DbCL-1.0",
+    "summary": "10,000 synthetic recruitment records with applicant demographics (Age, Gender, Race, Ethnicity), resume, job role, job description, and binary Best Match target.",
+    "leakage_cols": [
+      "Job Applicant Name",
+      "Age",
+      "Gender",
+      "Race",
+      "Ethnicity",
+      "Job Roles"
+    ],
+    "is_regression": false,
+    "sample_size": 2500
+  },
+  "audit": {
+    "dataset_name": "surendra365/recruitment-dataset",
+    "license": "DbCL-1.0",
+    "summary": "10,000 synthetic recruitment records with applicant demographics (Age, Gender, Race, Ethnicity), resume, job role, job description, and binary Best Match target.",
+    "rows": 2500,
+    "entities": {
+      "unique_resumes": 2500,
+      "unique_jds": 51,
+      "unique_pairs": 2500,
+      "exact_duplicate_rows": 0,
+      "rows_per_resume": {
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "rows_per_jd": {
+        "mean": 49.01960784313726,
+        "median": 48.0,
+        "p90": 57.0,
+        "p99": 62.5,
+        "max": 65.0
+      }
+    },
+    "text_lengths": {
+      "resume_chars": {
+        "mean": 294.0836,
+        "median": 294.0,
+        "p90": 313.0,
+        "p99": 332.00999999999976,
+        "max": 360.0
+      },
+      "jd_chars": {
+        "mean": 644.9948,
+        "median": 650.0,
+        "p90": 699.0,
+        "p99": 765.0,
+        "max": 765.0
+      },
+      "resume_words": {
+        "mean": 37.8188,
+        "median": 38.0,
+        "p90": 40.0,
+        "p99": 42.0,
+        "max": 45.0
+      },
+      "jd_words": {
+        "mean": 90.7664,
+        "median": 91.0,
+        "p90": 99.0,
+        "p99": 105.0,
+        "max": 105.0
+      }
+    },
+    "token_truncation_minilm": {
+      "sample_size": 500,
+      "resume_tokens_mean": 55.112,
+      "resume_pct_over_256": 0.0,
+      "resume_pct_over_512": 0.0,
+      "jd_tokens_mean": 113.108,
+      "jd_pct_over_256": 0.0,
+      "jd_pct_over_512": 0.0
+    },
+    "label_analysis": {
+      "classes": {
+        "0": 1266,
+        "1": 1234
+      },
+      "has_continuous": false,
+      "continuous_stats": {},
+      "continuous_binned": {}
+    }
+  },
+  "provenance": {
+    "dataset": "surendra365/recruitment-dataset",
+    "correlations": {},
+    "lexical_only_r2": null,
+    "lexical_only_accuracy": 0.4904,
+    "provenance": "FORMULA-DERIVED",
+    "evidence": "Synthetic demographic dataset with rule-based/templated Best Match assignment."
+  },
+  "leakage_columns_excluded": [
+    "Job Applicant Name",
+    "Age",
+    "Gender",
+    "Race",
+    "Ethnicity",
+    "Job Roles"
+  ],
+  "baselines": {
+    "cold_start_resume": {
+      "tfidf_lightgbm": {
+        "accuracy": 0.516,
+        "macro_f1": 0.5159476448972721,
+        "balanced_accuracy": 0.5162176971074941,
+        "macro_roc_auc": 0.5325429318339516,
+        "majority_baseline": 0.5064,
+        "ci_95_accuracy": [
+          0.4988,
+          0.53721
+        ],
+        "ci_95_macro_f1": [
+          0.4986766181517203,
+          0.5370365814671739
+        ]
+      },
+      "minilm_lightgbm": {
+        "accuracy": 0.5228,
+        "macro_f1": 0.5227522752275228,
+        "balanced_accuracy": 0.5227576486131488,
+        "macro_roc_auc": 0.5337264857474249,
+        "majority_baseline": 0.5064,
+        "ci_95_accuracy": [
+          0.5035900000000001,
+          0.54241
+        ],
+        "ci_95_macro_f1": [
+          0.5034951193633953,
+          0.5423801105816897
+        ]
+      }
+    },
+    "cold_start_jd": {
+      "tfidf_lightgbm": {
+        "accuracy": 0.47,
+        "macro_f1": 0.469999236798901,
+        "balanced_accuracy": 0.47009237993552866,
+        "macro_roc_auc": 0.4664018552799691,
+        "majority_baseline": 0.5064,
+        "ci_95_accuracy": [
+          0.44704286879279864,
+          0.49320685061287317
+        ],
+        "ci_95_macro_f1": [
+          0.44693891409334013,
+          0.49256157524822236
+        ]
+      },
+      "minilm_lightgbm": {
+        "accuracy": 0.5152,
+        "macro_f1": 0.5104599995734701,
+        "balanced_accuracy": 0.5140246978064886,
+        "macro_roc_auc": 0.5197734796869119,
+        "majority_baseline": 0.5064,
+        "ci_95_accuracy": [
+          0.49194915104418874,
+          0.5428859349954496
+        ],
+        "ci_95_macro_f1": [
+          0.4873923646502519,
+          0.5351653430549508
+        ]
+      }
+    },
+    "warm_start_random": {
+      "tfidf_lightgbm": {
+        "accuracy": 0.5176,
+        "macro_f1": 0.5175888852479161,
+        "balanced_accuracy": 0.5176233674125168,
+        "macro_roc_auc": 0.5359870161127199,
+        "majority_baseline": 0.5064,
+        "ci_95_accuracy": [
+          0.49797,
+          0.5376
+        ],
+        "ci_95_macro_f1": [
+          0.49796723374603796,
+          0.5372010636967766
+        ]
+      },
+      "minilm_lightgbm": {
+        "accuracy": 0.5244,
+        "macro_f1": 0.5243445195447597,
+        "balanced_accuracy": 0.524347669122109,
+        "macro_roc_auc": 0.5366242405155661,
+        "majority_baseline": 0.5064,
+        "ci_95_accuracy": [
+          0.50278,
+          0.5420200000000001
+        ],
+        "ci_95_macro_f1": [
+          0.5019564588908866,
+          0.5419107725914052
+        ]
+      }
+    }
+  }
+}

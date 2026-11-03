@@ -46,3 +46,4 @@ def test_adapter_schema_and_integrity(adapter_name):
 
     # 4. Source dataset check
     assert (df["source_dataset"].astype(str).str.strip() == "").sum() == 0
+

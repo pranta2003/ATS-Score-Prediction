@@ -90,3 +90,4 @@ class BaseDatasetAdapter(abc.ABC):
                 )
 
         return df.reset_index(drop=True)
+

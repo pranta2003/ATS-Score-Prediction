@@ -1,0 +1,215 @@
+{
+  "dataset_key": "control",
+  "metadata": {
+    "repo_id": "0xnbk/resume-ats-score-v1-en",
+    "license": "Unknown / Research",
+    "summary": "Derived from cnamuangtoun dataset. Resumes and JDs concatenated with ' SEP '. ats_score is an artificial projection of 3 original labels with added gaussian noise.",
+    "leakage_cols": [
+      "original_label (if predicting ats_score, eta^2=0.987; mutually derived)"
+    ],
+    "is_regression": true,
+    "sample_size": null
+  },
+  "audit": {
+    "dataset_name": "0xnbk/resume-ats-score-v1-en",
+    "license": "Unknown / Research",
+    "summary": "Derived from cnamuangtoun dataset. Resumes and JDs concatenated with ' SEP '. ats_score is an artificial projection of 3 original labels with added gaussian noise.",
+    "rows": 6374,
+    "entities": {
+      "unique_resumes": 682,
+      "unique_jds": 320,
+      "unique_pairs": 6274,
+      "exact_duplicate_rows": 100,
+      "rows_per_resume": {
+        "mean": 9.346041055718475,
+        "median": 6.0,
+        "p90": 22.0,
+        "p99": 42.37999999999988,
+        "max": 73.0
+      },
+      "rows_per_jd": {
+        "mean": 19.91875,
+        "median": 11.0,
+        "p90": 52.200000000000045,
+        "p99": 85.43,
+        "max": 112.0
+      }
+    },
+    "text_lengths": {
+      "resume_chars": {
+        "mean": 5717.5012550988395,
+        "median": 5100.5,
+        "p90": 9230.7,
+        "p99": 14905.0,
+        "max": 14972.0
+      },
+      "jd_chars": {
+        "mean": 2729.6859115155316,
+        "median": 2393.0,
+        "p90": 5149.0,
+        "p99": 7427.0,
+        "max": 11469.0
+      },
+      "resume_words": {
+        "mean": 721.0412613743332,
+        "median": 634.0,
+        "p90": 1198.0,
+        "p99": 2019.0,
+        "max": 2057.0
+      },
+      "jd_words": {
+        "mean": 374.33009099466585,
+        "median": 327.0,
+        "p90": 702.0,
+        "p99": 1042.0,
+        "max": 1570.0
+      }
+    },
+    "token_truncation_minilm": {
+      "sample_size": 500,
+      "resume_tokens_mean": 1135.572,
+      "resume_pct_over_256": 100.0,
+      "resume_pct_over_512": 92.60000000000001,
+      "jd_tokens_mean": 512.13,
+      "jd_pct_over_256": 71.8,
+      "jd_pct_over_512": 45.6
+    },
+    "label_analysis": {
+      "classes": {
+        "No Fit": 3206,
+        "Potential Fit": 1592,
+        "Good Fit": 1576
+      },
+      "has_continuous": true,
+      "continuous_stats": {
+        "count": 6374,
+        "mean": 47.23347819265767,
+        "std": 24.967601928336137,
+        "min": 19.16,
+        "p25": 24.8,
+        "median": 29.9,
+        "p75": 59.8,
+        "max": 90.05
+      },
+      "continuous_binned": {
+        "preregistered_bins": {
+          "<40": 3206,
+          "40-70": 1592,
+          ">70": 1576
+        },
+        "median_binary_split": {
+          "median_threshold": 29.9,
+          "<=median": 3204,
+          ">median": 3170
+        }
+      }
+    }
+  },
+  "provenance": {
+    "dataset": "0xnbk/resume-ats-score-v1-en",
+    "correlations": {
+      "tfidf_cosine": {
+        "spearman": 0.25116551290406686,
+        "pearson": 0.24211990310005335
+      },
+      "keyword_overlap": {
+        "spearman": 0.10034369448547016,
+        "pearson": 0.09338702851953314
+      },
+      "fuzzy_match": {
+        "spearman": 0.0937203784635553,
+        "pearson": 0.0911117840947416
+      },
+      "embedding_cosine": {
+        "spearman": 0.2246254301702773,
+        "pearson": 0.23585949721252145
+      }
+    },
+    "lexical_only_r2": 0.0796200125256653,
+    "lexical_only_accuracy": null,
+    "provenance": "HUMAN-LABELED",
+    "evidence": "Scraped recruitment board pairs with human candidate fit annotations (high noise / disagreement)."
+  },
+  "leakage_columns_excluded": [
+    "original_label (if predicting ats_score, eta^2=0.987; mutually derived)"
+  ],
+  "baselines": {
+    "cold_start_resume": {
+      "tfidf_lightgbm": {
+        "r2": 0.2910700790466225,
+        "mae": 17.846676652910435,
+        "spearman_rho": 0.48213411796101385,
+        "accuracy": 0.4504235958581738,
+        "macro_f1": 0.39262871285824064,
+        "balanced_accuracy": 0.44103475237027706,
+        "majority_baseline": 0.5029808597427048,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.4313059625361279,
+          0.4648753358579717
+        ],
+        "ci_95_macro_f1": [
+          0.3738602918844131,
+          0.4103699326024041
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": 0.2850027220967075,
+        "mae": 17.880159414883405,
+        "spearman_rho": 0.48409764802788624,
+        "accuracy": 0.44979604643865706,
+        "macro_f1": 0.40060392927288624,
+        "balanced_accuracy": 0.44333060311760697,
+        "majority_baseline": 0.5029808597427048,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.4276743117593161,
+          0.47051542855350237
+        ],
+        "ci_95_macro_f1": [
+          0.37460633605934873,
+          0.4229330202263517
+        ]
+      }
+    },
+    "cold_start_jd": null,
+    "warm_start_random": {
+      "tfidf_lightgbm": {
+        "r2": 0.37196895373899563,
+        "mae": 16.691209212581146,
+        "spearman_rho": 0.5530595838826039,
+        "accuracy": 0.4910574207718858,
+        "macro_f1": 0.4439281500709685,
+        "balanced_accuracy": 0.4863776585967607,
+        "majority_baseline": 0.5029808597427048,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.47296134310292653,
+          0.5096961770397013
+        ],
+        "ci_95_macro_f1": [
+          0.42489086600527604,
+          0.46171205294296025
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": 0.35420532216496936,
+        "mae": 16.837688963474005,
+        "spearman_rho": 0.540148944689341,
+        "accuracy": 0.4802321932852212,
+        "macro_f1": 0.43313968060987884,
+        "balanced_accuracy": 0.47054735759731936,
+        "majority_baseline": 0.5029808597427048,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.46118421951585037,
+          0.496239914115757
+        ],
+        "ci_95_macro_f1": [
+          0.4142022880228157,
+          0.45122798749865717
+        ]
+      }
+    }
+  }
+}

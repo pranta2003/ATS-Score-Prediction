@@ -52,3 +52,4 @@ class ControlAdapter(BaseDatasetAdapter):
         df["source_dataset"] = self.name
 
         return df
+

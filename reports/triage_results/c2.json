@@ -1,0 +1,259 @@
+{
+  "dataset_key": "c2",
+  "metadata": {
+    "repo_id": "netsol/resume-score-details",
+    "license": "cc / unknown",
+    "summary": "1,031 samples of resumes and job descriptions generated and assessed using GPT-4o. Includes macro/micro evaluation scores and requirement check criteria.",
+    "leakage_cols": [
+      "micro_scores",
+      "requirements",
+      "valid_resume_and_jd",
+      "justification"
+    ],
+    "is_regression": true,
+    "sample_size": null
+  },
+  "audit": {
+    "dataset_name": "netsol/resume-score-details",
+    "license": "cc / unknown",
+    "summary": "1,031 samples of resumes and job descriptions generated and assessed using GPT-4o. Includes macro/micro evaluation scores and requirement check criteria.",
+    "rows": 1020,
+    "entities": {
+      "unique_resumes": 236,
+      "unique_jds": 89,
+      "unique_pairs": 770,
+      "exact_duplicate_rows": 250,
+      "rows_per_resume": {
+        "mean": 4.322033898305085,
+        "median": 3.0,
+        "p90": 10.0,
+        "p99": 12.0,
+        "max": 15.0
+      },
+      "rows_per_jd": {
+        "mean": 11.460674157303371,
+        "median": 1.0,
+        "p90": 67.60000000000001,
+        "p99": 85.48000000000002,
+        "max": 89.0
+      }
+    },
+    "text_lengths": {
+      "resume_chars": {
+        "mean": 4169.196078431372,
+        "median": 3262.5,
+        "p90": 7169.0,
+        "p99": 19703.0,
+        "max": 36942.0
+      },
+      "jd_chars": {
+        "mean": 1826.6617647058824,
+        "median": 1708.0,
+        "p90": 2051.0,
+        "p99": 5722.059999999999,
+        "max": 19703.0
+      },
+      "resume_words": {
+        "mean": 550.2519607843137,
+        "median": 436.0,
+        "p90": 1021.0,
+        "p99": 2584.0,
+        "max": 4038.0
+      },
+      "jd_words": {
+        "mean": 250.74313725490197,
+        "median": 224.0,
+        "p90": 290.0,
+        "p99": 730.129999999996,
+        "max": 4038.0
+      }
+    },
+    "token_truncation_minilm": {
+      "sample_size": 500,
+      "resume_tokens_mean": 1101.466,
+      "resume_pct_over_256": 95.39999999999999,
+      "resume_pct_over_512": 60.199999999999996,
+      "jd_tokens_mean": 358.752,
+      "jd_pct_over_256": 81.8,
+      "jd_pct_over_512": 3.5999999999999996
+    },
+    "label_analysis": {
+      "classes": {
+        "match": 644,
+        "mismatch": 194,
+        "invalid": 142,
+        "empty": 40
+      },
+      "has_continuous": true,
+      "continuous_stats": {
+        "count": 878,
+        "mean": 57.610649202733484,
+        "std": 19.67546014611042,
+        "min": 0.0,
+        "p25": 44.349999999999994,
+        "median": 60.0,
+        "p75": 72.75,
+        "max": 95.5
+      },
+      "continuous_binned": {
+        "preregistered_bins": {
+          "<40": 162,
+          "40-70": 463,
+          ">70": 253
+        },
+        "median_binary_split": {
+          "median_threshold": 60.0,
+          "<=median": 467,
+          ">median": 411
+        }
+      }
+    }
+  },
+  "provenance": {
+    "dataset": "netsol/resume-score-details",
+    "correlations": {
+      "tfidf_cosine": {
+        "spearman": 0.39936637465427177,
+        "pearson": 0.13257092867149545
+      },
+      "keyword_overlap": {
+        "spearman": 0.4018654183283237,
+        "pearson": 0.18378975906661085
+      },
+      "fuzzy_match": {
+        "spearman": 0.09462087019787714,
+        "pearson": 0.06615907165517747
+      },
+      "embedding_cosine": {
+        "spearman": 0.26295110936017163,
+        "pearson": 0.1873558806122957
+      }
+    },
+    "lexical_only_r2": 0.3937513129534135,
+    "lexical_only_accuracy": null,
+    "provenance": "LLM-DERIVED",
+    "evidence": "Dataset card documents generation/assessment via GPT-4o / LLM."
+  },
+  "leakage_columns_excluded": [
+    "micro_scores",
+    "requirements",
+    "valid_resume_and_jd",
+    "justification"
+  ],
+  "baselines": {
+    "cold_start_resume": {
+      "tfidf_lightgbm": {
+        "r2": 0.34324951995763864,
+        "mae": 12.846141087604577,
+        "spearman_rho": 0.5628764915411327,
+        "accuracy": 0.591116173120729,
+        "macro_f1": 0.5161574581066602,
+        "balanced_accuracy": 0.5016892631900822,
+        "majority_baseline": 0.5273348519362187,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.5483425318109272,
+          0.6329856972586412
+        ],
+        "ci_95_macro_f1": [
+          0.4734053631999993,
+          0.5581274403272877
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": 0.2896298449737875,
+        "mae": 13.442326911904015,
+        "spearman_rho": 0.49019258046023123,
+        "accuracy": 0.5455580865603644,
+        "macro_f1": 0.4374700216015948,
+        "balanced_accuracy": 0.4385995365430054,
+        "majority_baseline": 0.5273348519362187,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.503903582348812,
+          0.5819235160809817
+        ],
+        "ci_95_macro_f1": [
+          0.39042493499252523,
+          0.4777148913087883
+        ]
+      }
+    },
+    "cold_start_jd": {
+      "tfidf_lightgbm": {
+        "r2": 0.2652514326298996,
+        "mae": 13.028457114867566,
+        "spearman_rho": 0.5455686758967283,
+        "accuracy": 0.6070615034168565,
+        "macro_f1": 0.49742031507570045,
+        "balanced_accuracy": 0.4923237234565372,
+        "majority_baseline": 0.5273348519362187,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.5379197452830874,
+          0.6614785535102286
+        ],
+        "ci_95_macro_f1": [
+          0.42132168292725236,
+          0.5627717159113701
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": 0.2759821214397523,
+        "mae": 13.058712469324643,
+        "spearman_rho": 0.5281240020405732,
+        "accuracy": 0.5694760820045558,
+        "macro_f1": 0.471861676334788,
+        "balanced_accuracy": 0.4604294282720008,
+        "majority_baseline": 0.5273348519362187,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.5059321246928395,
+          0.621723907712059
+        ],
+        "ci_95_macro_f1": [
+          0.4013901855900873,
+          0.5287081608384747
+        ]
+      }
+    },
+    "warm_start_random": {
+      "tfidf_lightgbm": {
+        "r2": 0.590196349902442,
+        "mae": 9.70467585439659,
+        "spearman_rho": 0.7638883292848433,
+        "accuracy": 0.6776765375854215,
+        "macro_f1": 0.647802376079549,
+        "balanced_accuracy": 0.6294845731621225,
+        "majority_baseline": 0.5273348519362187,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.6417068253853165,
+          0.7102053140096619
+        ],
+        "ci_95_macro_f1": [
+          0.6073978011938566,
+          0.6870841294138357
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": 0.56954366644605,
+        "mae": 10.206188459453335,
+        "spearman_rho": 0.7523593024771287,
+        "accuracy": 0.6457858769931663,
+        "macro_f1": 0.601780494893977,
+        "balanced_accuracy": 0.580894995242717,
+        "majority_baseline": 0.5273348519362187,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.6039262866282059,
+          0.6771139064901953
+        ],
+        "ci_95_macro_f1": [
+          0.5526648800635218,
+          0.6393294156671092
+        ]
+      }
+    }
+  }
+}

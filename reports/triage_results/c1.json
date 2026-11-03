@@ -1,0 +1,258 @@
+{
+  "dataset_key": "c1",
+  "metadata": {
+    "repo_id": "harsh72877287/job_resume_fit",
+    "license": "other",
+    "summary": "Contains 2,385 resume-job pairs across 23 job categories. Evaluates skill matching via direct AI-based skill match score, skill string match score, and fuzzy match score.",
+    "leakage_cols": [
+      "skill_string_match_score",
+      "fuzzy_match_score",
+      "ai_matched_skills",
+      "category"
+    ],
+    "is_regression": true,
+    "sample_size": null
+  },
+  "audit": {
+    "dataset_name": "harsh72877287/job_resume_fit",
+    "license": "other",
+    "summary": "Contains 2,385 resume-job pairs across 23 job categories. Evaluates skill matching via direct AI-based skill match score, skill string match score, and fuzzy match score.",
+    "rows": 2384,
+    "entities": {
+      "unique_resumes": 2382,
+      "unique_jds": 23,
+      "unique_pairs": 2382,
+      "exact_duplicate_rows": 2,
+      "rows_per_resume": {
+        "mean": 1.0008396305625524,
+        "median": 1.0,
+        "p90": 1.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "rows_per_jd": {
+        "mean": 103.65217391304348,
+        "median": 115.0,
+        "p90": 118.0,
+        "p99": 119.78,
+        "max": 120.0
+      }
+    },
+    "text_lengths": {
+      "resume_chars": {
+        "mean": 6285.715184563758,
+        "median": 5868.5,
+        "p90": 9022.800000000001,
+        "p99": 15900.510000000007,
+        "max": 38813.0
+      },
+      "jd_chars": {
+        "mean": 4805.322147651007,
+        "median": 4801.0,
+        "p90": 5091.0,
+        "p99": 5112.0,
+        "max": 5112.0
+      },
+      "resume_words": {
+        "mean": 811.6291946308725,
+        "median": 756.0,
+        "p90": 1183.900000000002,
+        "p99": 2052.8900000000012,
+        "max": 5190.0
+      },
+      "jd_words": {
+        "mean": 599.1405201342282,
+        "median": 605.0,
+        "p90": 629.0,
+        "p99": 638.0,
+        "max": 638.0
+      }
+    },
+    "token_truncation_minilm": {
+      "sample_size": 500,
+      "resume_tokens_mean": 1046.932,
+      "resume_pct_over_256": 99.2,
+      "resume_pct_over_512": 90.4,
+      "jd_tokens_mean": 860.614,
+      "jd_pct_over_256": 100.0,
+      "jd_pct_over_512": 100.0
+    },
+    "label_analysis": {
+      "classes": {
+        "<40": 1174,
+        "40-70": 745,
+        ">70": 465
+      },
+      "has_continuous": true,
+      "continuous_stats": {
+        "count": 2384,
+        "mean": 44.05433305369127,
+        "std": 24.617186848838593,
+        "min": 0.0,
+        "p25": 22.23,
+        "median": 40.65,
+        "p75": 63.972500000000004,
+        "max": 100.0
+      },
+      "continuous_binned": {
+        "preregistered_bins": {
+          "<40": 1174,
+          "40-70": 745,
+          ">70": 465
+        },
+        "median_binary_split": {
+          "median_threshold": 40.65,
+          "<=median": 1194,
+          ">median": 1190
+        }
+      }
+    }
+  },
+  "provenance": {
+    "dataset": "harsh72877287/job_resume_fit",
+    "correlations": {
+      "tfidf_cosine": {
+        "spearman": 0.6899064238882594,
+        "pearson": 0.672781771692531
+      },
+      "keyword_overlap": {
+        "spearman": 0.6008717349655337,
+        "pearson": 0.5955424080278306
+      },
+      "fuzzy_match": {
+        "spearman": 0.26186194489486303,
+        "pearson": 0.2728736105541685
+      },
+      "embedding_cosine": {
+        "spearman": 0.5789309280330616,
+        "pearson": 0.5823682985184918
+      }
+    },
+    "lexical_only_r2": 0.589603769424391,
+    "lexical_only_accuracy": null,
+    "provenance": "LLM-DERIVED",
+    "evidence": "Dataset card describes direct AI-based skill matching."
+  },
+  "leakage_columns_excluded": [
+    "skill_string_match_score",
+    "fuzzy_match_score",
+    "ai_matched_skills",
+    "category"
+  ],
+  "baselines": {
+    "cold_start_resume": {
+      "tfidf_lightgbm": {
+        "r2": 0.7077858447854694,
+        "mae": 10.358838368011275,
+        "spearman_rho": 0.8354127293749102,
+        "accuracy": 0.7302852348993288,
+        "macro_f1": 0.7082040607779029,
+        "balanced_accuracy": 0.6928886713673128,
+        "majority_baseline": 0.4924496644295302,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.712243874362191,
+          0.7500026205450734
+        ],
+        "ci_95_macro_f1": [
+          0.6899441024887679,
+          0.7271970380887147
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": 0.6651661819316858,
+        "mae": 11.103320826473531,
+        "spearman_rho": 0.8117297056708618,
+        "accuracy": 0.6971476510067114,
+        "macro_f1": 0.6698127528299075,
+        "balanced_accuracy": 0.6568765114686284,
+        "majority_baseline": 0.4924496644295302,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.6785347500379733,
+          0.7151905322293918
+        ],
+        "ci_95_macro_f1": [
+          0.6502460464038982,
+          0.6879905983624527
+        ]
+      }
+    },
+    "cold_start_jd": {
+      "tfidf_lightgbm": {
+        "r2": 0.1970027941753354,
+        "mae": 17.751082415174455,
+        "spearman_rho": 0.5177564770589833,
+        "accuracy": 0.5469798657718121,
+        "macro_f1": 0.38917390588757333,
+        "balanced_accuracy": 0.4279311718786401,
+        "majority_baseline": 0.4924496644295302,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.4616916635742657,
+          0.6299231215381281
+        ],
+        "ci_95_macro_f1": [
+          0.3289844788867551,
+          0.42625389471751307
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": -0.014225663409793032,
+        "mae": 20.281617317139634,
+        "spearman_rho": 0.2697716537731135,
+        "accuracy": 0.46434563758389263,
+        "macro_f1": 0.3496653094880444,
+        "balanced_accuracy": 0.38191282687606104,
+        "majority_baseline": 0.4924496644295302,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.3634780312221603,
+          0.565511105803678
+        ],
+        "ci_95_macro_f1": [
+          0.2846968605168566,
+          0.4004214485204644
+        ]
+      }
+    },
+    "warm_start_random": {
+      "tfidf_lightgbm": {
+        "r2": 0.7019569827342176,
+        "mae": 10.487954800300312,
+        "spearman_rho": 0.8306713775339724,
+        "accuracy": 0.7235738255033557,
+        "macro_f1": 0.7041309334638304,
+        "balanced_accuracy": 0.6888846351700506,
+        "majority_baseline": 0.4924496644295302,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.706992982343874,
+          0.7407850115374334
+        ],
+        "ci_95_macro_f1": [
+          0.6855155989123932,
+          0.721969117894926
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": 0.6562886980617965,
+        "mae": 11.21563651653203,
+        "spearman_rho": 0.8045499097072031,
+        "accuracy": 0.7067953020134228,
+        "macro_f1": 0.6812235524017418,
+        "balanced_accuracy": 0.6681782039364768,
+        "majority_baseline": 0.4924496644295302,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.6885963071758288,
+          0.7224394416656115
+        ],
+        "ci_95_macro_f1": [
+          0.6620354394332519,
+          0.699892096457449
+        ]
+      }
+    }
+  }
+}

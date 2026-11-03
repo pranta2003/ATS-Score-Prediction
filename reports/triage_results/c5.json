@@ -1,0 +1,162 @@
+{
+  "dataset_key": "c5",
+  "metadata": {
+    "repo_id": "cnamuangtoun/resume-job-description-fit",
+    "license": "unknown",
+    "summary": "Original source dataset of 0xnbk containing 8,000 resume and job description pairs with 3 human candidate fit labels (No Fit, Potential Fit, Good Fit).",
+    "leakage_cols": [],
+    "is_regression": false,
+    "sample_size": null
+  },
+  "audit": {
+    "dataset_name": "cnamuangtoun/resume-job-description-fit",
+    "license": "unknown",
+    "summary": "Original source dataset of 0xnbk containing 8,000 resume and job description pairs with 3 human candidate fit labels (No Fit, Potential Fit, Good Fit).",
+    "rows": 8000,
+    "entities": {
+      "unique_resumes": 643,
+      "unique_jds": 351,
+      "unique_pairs": 7993,
+      "exact_duplicate_rows": 7,
+      "rows_per_resume": {
+        "mean": 12.441679626749611,
+        "median": 7.0,
+        "p90": 27.0,
+        "p99": 55.58000000000004,
+        "max": 82.0
+      },
+      "rows_per_jd": {
+        "mean": 22.79202279202279,
+        "median": 16.0,
+        "p90": 57.0,
+        "p99": 86.0,
+        "max": 111.0
+      }
+    },
+    "text_lengths": {
+      "resume_chars": {
+        "mean": 5773.369,
+        "median": 5123.0,
+        "p90": 9248.0,
+        "p99": 16072.0,
+        "max": 25364.0
+      },
+      "jd_chars": {
+        "mean": 2776.772,
+        "median": 2401.0,
+        "p90": 5303.0,
+        "p99": 7434.0,
+        "max": 8171.0
+      },
+      "resume_words": {
+        "mean": 704.39425,
+        "median": 618.0,
+        "p90": 1153.0,
+        "p99": 2130.0,
+        "max": 3134.0
+      },
+      "jd_words": {
+        "mean": 378.439875,
+        "median": 326.0,
+        "p90": 737.0,
+        "p99": 1067.0,
+        "max": 1254.0
+      }
+    },
+    "token_truncation_minilm": {
+      "sample_size": 500,
+      "resume_tokens_mean": 1166.064,
+      "resume_pct_over_256": 100.0,
+      "resume_pct_over_512": 96.39999999999999,
+      "jd_tokens_mean": 490.104,
+      "jd_pct_over_256": 69.0,
+      "jd_pct_over_512": 41.8
+    },
+    "label_analysis": {
+      "classes": {
+        "No Fit": 4000,
+        "Potential Fit": 2000,
+        "Good Fit": 2000
+      },
+      "has_continuous": false,
+      "continuous_stats": {},
+      "continuous_binned": {}
+    }
+  },
+  "provenance": {
+    "dataset": "cnamuangtoun/resume-job-description-fit",
+    "correlations": {},
+    "lexical_only_r2": null,
+    "lexical_only_accuracy": 0.517125,
+    "provenance": "HUMAN-LABELED",
+    "evidence": "Scraped recruitment board pairs with human candidate fit annotations (high noise / disagreement)."
+  },
+  "leakage_columns_excluded": [],
+  "baselines": {
+    "cold_start_resume": {
+      "tfidf_lightgbm": {
+        "accuracy": 0.66175,
+        "macro_f1": 0.6320529120993967,
+        "balanced_accuracy": 0.6215833333333333,
+        "macro_roc_auc": 0.8290790347222222,
+        "majority_baseline": 0.5,
+        "ci_95_accuracy": [
+          0.6405780387477791,
+          0.6845653832910962
+        ],
+        "ci_95_macro_f1": [
+          0.6039397215325231,
+          0.6591246062488783
+        ]
+      },
+      "minilm_lightgbm": {
+        "accuracy": 0.656625,
+        "macro_f1": 0.627568626553321,
+        "balanced_accuracy": 0.6222500000000001,
+        "macro_roc_auc": 0.8297023124999999,
+        "majority_baseline": 0.5,
+        "ci_95_accuracy": [
+          0.6363729194453223,
+          0.679484620888057
+        ],
+        "ci_95_macro_f1": [
+          0.6026570018560572,
+          0.6548241259715734
+        ]
+      }
+    },
+    "cold_start_jd": null,
+    "warm_start_random": {
+      "tfidf_lightgbm": {
+        "accuracy": 0.721125,
+        "macro_f1": 0.6959781781257214,
+        "balanced_accuracy": 0.6902499999999999,
+        "macro_roc_auc": 0.8687415208333333,
+        "majority_baseline": 0.5,
+        "ci_95_accuracy": [
+          0.7058686648172323,
+          0.7369078212867415
+        ],
+        "ci_95_macro_f1": [
+          0.6763569032272466,
+          0.715202805260228
+        ]
+      },
+      "minilm_lightgbm": {
+        "accuracy": 0.716125,
+        "macro_f1": 0.6899110183379484,
+        "balanced_accuracy": 0.6860833333333334,
+        "macro_roc_auc": 0.8678500833333334,
+        "majority_baseline": 0.5,
+        "ci_95_accuracy": [
+          0.6965382179279748,
+          0.7345413176737716
+        ],
+        "ci_95_macro_f1": [
+          0.6682821164765301,
+          0.7098861898306152
+        ]
+      }
+    }
+  }
+}
