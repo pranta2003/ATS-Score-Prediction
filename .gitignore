@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Data and Cache (never commit raw datasets or big embeddings)
+data/
+raw_data/
+cache/
+*.npy
+*.npz
+*.parquet
+*.tar.gz
+*.zip
+features/*.npy
+
+# Kaggle / HF cache
+.kaggle/
+.cache/
+
+# Testing & Logs
+.pytest_cache/
+*.log
