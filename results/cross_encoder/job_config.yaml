@@ -1,0 +1,11 @@
+batch_size: 32
+dataset: c5
+epochs: 3
+lr: 2.0e-05
+models:
+- cross_encoder_minilm
+scenarios:
+- s2_cold_jd
+- s3_double_cold
+script: scripts/run_cross_encoder_suite.py
+task: cross_encoder_suite
