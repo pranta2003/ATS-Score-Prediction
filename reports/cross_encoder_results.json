@@ -1,0 +1,40 @@
+{
+  "pilot_projection": {
+    "1_epoch_seconds": 129.6119668483734,
+    "projected_3_epochs_seconds": 388.83590054512024,
+    "device": "cuda"
+  },
+  "scenarios": {
+    "S2_cold_jd": {
+      "accuracy": 0.5162827640984908,
+      "macro_f1": 0.3339336878654458,
+      "balanced_accuracy": 0.4019301341857698,
+      "macro_roc_auc": 0.6195933856785629,
+      "majority_baseline": 0.5210484511517077,
+      "ci_95_accuracy": [
+        0.47126752140302514,
+        0.5639868248064094
+      ],
+      "ci_95_macro_f1": [
+        0.27621146588517614,
+        0.38173479474880034
+      ]
+    },
+    "S3_double_cold": {
+      "accuracy": 0.5183823529411765,
+      "macro_f1": 0.29102233676975947,
+      "balanced_accuracy": 0.3464776251661497,
+      "macro_roc_auc": 0.5687596448494406,
+      "majority_baseline": 0.5441176470588235,
+      "ci_95_accuracy": [
+        0.43553592168423083,
+        0.6125470418588926
+      ],
+      "ci_95_macro_f1": [
+        0.23120981761486953,
+        0.33833768355678046
+      ]
+    }
+  },
+  "suite_total_time_seconds": 1065.2354323863983
+}
