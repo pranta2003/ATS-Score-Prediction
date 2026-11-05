@@ -157,16 +157,25 @@ def prepare_kernel_bundle(
 
 
 def validate_results_dir(target_dir: Path) -> dict:
-    """Validate that metrics.json or j1_sweep_results.json exist in result directory."""
-    metrics_file = target_dir / "metrics.json"
+    """Validate that metrics.json, j1_sweep_results.json, c2_ablation_results.json, or cross_encoder_results.json exist."""
     sweep_file = target_dir / "j1_sweep_results.json"
-
     if sweep_file.exists():
         with open(sweep_file, "r", encoding="utf-8") as f:
             return json.load(f)
 
+    c2_file = target_dir / "c2_ablation_results.json"
+    if c2_file.exists():
+        with open(c2_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    ce_file = target_dir / "cross_encoder_results.json"
+    if ce_file.exists():
+        with open(ce_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    metrics_file = target_dir / "metrics.json"
     if not metrics_file.exists():
-        raise FileNotFoundError(f"Missing metrics.json in {target_dir}")
+        raise FileNotFoundError(f"Missing metrics.json / sweep / ablation file in {target_dir}")
 
     with open(metrics_file, "r", encoding="utf-8") as f:
         metrics = json.load(f)
