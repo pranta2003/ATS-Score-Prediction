@@ -1,0 +1,15 @@
+dataset: "c5"
+scenario: "s3_double_cold"
+model: "lightgbm"
+features: "minilm_late_interaction"
+seeds: [42, 43, 44, 45, 46]
+holdout_pct: 0.15
+n_boot: 500
+model_params:
+  n_estimators: 250
+  max_depth: 6
+  learning_rate: 0.05
+  num_leaves: 31
+  n_jobs: -1
+smoke: false
+

@@ -1,0 +1,6 @@
+{
+  "data_loading_sec": 10.05922794342041,
+  "feature_lookup_sec": 0.09760499000549316,
+  "cv_training_sec": 1.4488637447357178,
+  "total_sec": 11.74100947380066
+}
