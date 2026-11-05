@@ -1,0 +1,13 @@
+dataset: "c2"
+task: "c2_ablation"
+script: "scripts/run_c2_ablation.py"
+models:
+  - "lightgbm"
+scenarios:
+  - "s1_cold_resume"
+  - "s2_cold_jd"
+features:
+  - "F1_Lexical"
+  - "F2_DenseSemantic"
+  - "F3_RubricHeuristics"
+  - "F4_CombinedFull"
