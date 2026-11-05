@@ -26,6 +26,7 @@ features/*.npy
 
 # Kaggle / HF cache
 .kaggle/
+.kaggle_kernels/
 .cache/
 
 # Testing & Logs
