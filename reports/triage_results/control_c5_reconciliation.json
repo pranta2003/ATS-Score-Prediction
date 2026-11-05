@@ -1,0 +1,10 @@
+{
+  "control_raw_unique_resumes_strip": 778,
+  "control_normalized_unique_resumes": 682,
+  "c5_unique_resumes": 643,
+  "exact_res_matches": 0,
+  "exact_jd_matches": 7,
+  "exact_pair_matches": 0,
+  "fuzzy_res_matches_ge_95": 636,
+  "fuzzy_jd_matches_ge_95": 280
+}
