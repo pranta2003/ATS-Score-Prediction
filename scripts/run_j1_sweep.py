@@ -320,6 +320,7 @@ def run_j1_sweep():
 
     # Save to JSON
     out_json = PROJECT_ROOT / "reports" / "j1_sweep_results.json"
+    out_json.parent.mkdir(parents=True, exist_ok=True)
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(all_results, f, indent=2)
     print(f"Saved results to {out_json}")
