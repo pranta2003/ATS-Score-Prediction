@@ -1,0 +1,20 @@
+=================================================================
+   ATS SCORE PREDICTION - EXPERIMENT RUNNER
+   Run ID: c5_s1_cold_resume_lightgbm_13521e38
+   Git Commit: 204bf98 | Smoke Mode: True
+=================================================================
+Smoke mode active: sliced data to 200 pairs across classes: {'No Fit': 112, 'Potential Fit': 44, 'Good Fit': 44}.
+[Stage 1] Loaded 200 rows across 155 resumes and 124 JDs (10.06s)
+[Stage 2] Features ready: minilm_interaction shape (200, 1537) (0.10s)
+[Stage 3] Executing Scenario 's1_cold_resume' with Model 'lightgbm'...
+
+=================================================================
+   EXPERIMENT RESULTS
+=================================================================
+Accuracy:        0.5350 (95% CI: [0.45937595187095653, 0.6101061375142115])
+Macro-F1:        0.3509 (95% CI: [0.28272679351289454, 0.4023726235143513])
+Macro ROC-AUC:   0.5546120546120547
+Majority Base:   0.5600
+-----------------------------------------------------------------
+Timings: Loading=10.06s | Features=0.10s | CV=1.45s | Total=11.74s
+=================================================================
