@@ -1,0 +1,130 @@
+{
+  "dataset": "cnamuangtoun/resume-job-description-fit",
+  "total_pairs": 8000,
+  "unique_resumes": 643,
+  "unique_jds": 351,
+  "total_sweep_time_seconds": 7426.07,
+  "S1_cold_resume": {
+    "protocol": "GroupKFold by resume_id (5 folds)",
+    "majority": {
+      "accuracy": 0.5000,
+      "macro_f1": 0.2222,
+      "macro_roc_auc": 0.5000,
+      "time_sec": 0.15
+    },
+    "jd_prior": {
+      "accuracy": 0.6021,
+      "macro_f1": 0.5804,
+      "macro_roc_auc": 0.7741,
+      "time_sec": 1.05
+    },
+    "resume_prior": {
+      "accuracy": 0.5000,
+      "macro_f1": 0.2222,
+      "macro_roc_auc": 0.4831,
+      "time_sec": 1.90
+    },
+    "logistic": {
+      "accuracy": 0.6264,
+      "macro_f1": 0.5997,
+      "macro_roc_auc": 0.7945,
+      "time_sec": 136.00
+    },
+    "lightgbm": {
+      "accuracy": 0.6603,
+      "macro_f1": 0.6313,
+      "macro_roc_auc": 0.8317,
+      "time_sec": 832.64
+    },
+    "xgboost": {
+      "accuracy": 0.6526,
+      "macro_f1": 0.6209,
+      "macro_roc_auc": 0.8267,
+      "time_sec": 1706.97
+    }
+  },
+  "S2_cold_jd": {
+    "protocol": "GroupKFold by jd_id (5 folds)",
+    "majority": {
+      "accuracy": 0.5000,
+      "macro_f1": 0.2222,
+      "macro_roc_auc": 0.5000,
+      "time_sec": 0.13
+    },
+    "jd_prior": {
+      "accuracy": 0.5000,
+      "macro_f1": 0.2222,
+      "macro_roc_auc": 0.4825,
+      "time_sec": 0.85
+    },
+    "resume_prior": {
+      "accuracy": 0.4935,
+      "macro_f1": 0.4147,
+      "macro_roc_auc": 0.6319,
+      "time_sec": 1.81
+    },
+    "logistic": {
+      "accuracy": 0.5423,
+      "macro_f1": 0.4630,
+      "macro_roc_auc": 0.6881,
+      "time_sec": 125.90
+    },
+    "lightgbm": {
+      "accuracy": 0.5545,
+      "macro_f1": 0.4384,
+      "macro_roc_auc": 0.7267,
+      "time_sec": 832.16
+    },
+    "xgboost": {
+      "accuracy": 0.5521,
+      "macro_f1": 0.4296,
+      "macro_roc_auc": 0.7230,
+      "time_sec": 1684.51
+    }
+  },
+  "S3_double_cold": {
+    "protocol": "20 Independent Seeds, disjoint 15% holdouts for both resumes and JDs",
+    "majority": {
+      "accuracy": 0.4923,
+      "ci_95_accuracy": [0.3690, 0.5914],
+      "macro_f1": 0.2193,
+      "macro_roc_auc": 0.5000,
+      "time_sec": 0.53
+    },
+    "jd_prior": {
+      "accuracy": 0.4923,
+      "ci_95_accuracy": [0.3690, 0.5914],
+      "macro_f1": 0.2193,
+      "macro_roc_auc": 0.5000,
+      "time_sec": 3.52
+    },
+    "resume_prior": {
+      "accuracy": 0.4923,
+      "ci_95_accuracy": [0.3690, 0.5914],
+      "macro_f1": 0.2193,
+      "macro_roc_auc": 0.5000,
+      "time_sec": 6.16
+    },
+    "logistic": {
+      "accuracy": 0.5127,
+      "ci_95_accuracy": [0.4128, 0.6229],
+      "macro_f1": 0.4310,
+      "macro_roc_auc": 0.6541,
+      "time_sec": 95.02
+    },
+    "lightgbm": {
+      "accuracy": 0.5115,
+      "ci_95_accuracy": [0.3921, 0.6338],
+      "macro_f1": 0.3751,
+      "macro_roc_auc": 0.6691,
+      "time_sec": 624.32
+    },
+    "xgboost": {
+      "accuracy": 0.5133,
+      "ci_95_accuracy": [0.3927, 0.6269],
+      "macro_f1": 0.3789,
+      "macro_roc_auc": 0.6678,
+      "time_sec": 1301.03
+    }
+  }
+}

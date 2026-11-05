@@ -18,32 +18,20 @@ from scripts.run_experiment import get_git_commit, compute_run_id
 
 
 def get_kaggle_username():
-    """Retrieve Kaggle username from environment or kaggle config."""
-    user = os.environ.get("KAGGLE_USERNAME")
-    if user:
-        return user
-    try:
-        cfg = subprocess.check_output(["kaggle", "config", "view"], stderr=subprocess.DEVNULL).decode("utf-8")
-        for line in cfg.splitlines():
-            if "username:" in line:
-                return line.split("username:")[1].strip()
-    except Exception:
-        pass
-    return "prantakumerpandit390"
+    """Retrieve Kaggle username from environment or default."""
+    return os.environ.get("KAGGLE_USERNAME", "prantakumerpandit390")
 
 
 def create_code_payload(root_dir: Path) -> str:
-    """Package src/ directory and run_experiment.py into a base64 gzipped tar string."""
+    """Package src/ and scripts/ directories into a base64 gzipped tar string."""
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:
-        # Add src/
         src_dir = root_dir / "src"
         if src_dir.exists():
             tar.add(str(src_dir), arcname="src")
-        # Add run_experiment.py
-        runner_file = root_dir / "scripts" / "run_experiment.py"
-        if runner_file.exists():
-            tar.add(str(runner_file), arcname="scripts/run_experiment.py")
+        scripts_dir = root_dir / "scripts"
+        if scripts_dir.exists():
+            tar.add(str(scripts_dir), arcname="scripts")
 
     buf.seek(0)
     return base64.b64encode(buf.read()).decode("utf-8")
@@ -52,6 +40,9 @@ def create_code_payload(root_dir: Path) -> str:
 def generate_driver_code(config_dict: dict, code_payload_b64: str) -> str:
     """Generate self-contained Python script to execute inside Kaggle container."""
     config_yaml_str = yaml.dump(config_dict)
+    script_target = config_dict.get("script", "scripts/run_experiment.py")
+    script_arg = f"--config job_config.yaml" if "run_experiment.py" in script_target else ""
+
     driver = f'''# Auto-generated ATS Experiment Runner Driver for Kaggle
 import os
 import sys
@@ -60,6 +51,7 @@ import base64
 import tarfile
 import io
 import yaml
+import subprocess
 from pathlib import Path
 
 print("=" * 60)
@@ -72,7 +64,7 @@ tar_data = base64.b64decode(payload_b64)
 with tarfile.open(fileobj=io.BytesIO(tar_data), mode="r:gz") as tar:
     tar.extractall(".")
 
-print("[OK] Unpacked src/ and runner scripts.")
+print("[OK] Unpacked src/ and scripts/ directories.")
 
 # 2. Write config.yaml
 config_str = """{config_yaml_str}"""
@@ -80,20 +72,28 @@ with open("job_config.yaml", "w", encoding="utf-8") as f:
     f.write(config_str)
 
 # 3. Execute experiment runner
-print("[INFO] Invoking run_experiment.py...", flush=True)
-import subprocess
-ret = subprocess.run([sys.executable, "scripts/run_experiment.py", "--config", "job_config.yaml"])
+cmd = [sys.executable, "{script_target}"]
+if "{script_arg}":
+    cmd.extend("{script_arg}".split())
+
+print(f"[INFO] Invoking: {{' '.join(cmd)}}", flush=True)
+ret = subprocess.run(cmd)
 if ret.returncode != 0:
-    print(f"[FATAL] run_experiment exited with code {{ret.returncode}}", flush=True)
+    print(f"[FATAL] Script exited with code {{ret.returncode}}", flush=True)
     sys.exit(ret.returncode)
 
 # 4. Copy results to /kaggle/working so Kaggle captures them as output artifacts
 results_dir = Path("results")
-found = list(results_dir.glob("*/*"))
-print(f"[INFO] Copying {{len(found)}} result files to output root...", flush=True)
-for p in results_dir.glob("*/*"):
-    if p.is_file():
-        shutil.copy(p, p.name)
+if results_dir.exists():
+    for p in results_dir.glob("**/*"):
+        if p.is_file():
+            shutil.copy(p, p.name)
+
+reports_dir = Path("reports")
+if reports_dir.exists():
+    for p in reports_dir.glob("*"):
+        if p.is_file():
+            shutil.copy(p, p.name)
 
 print("=" * 60)
 print("   ATS KAGGLE EXPERIMENT DRIVER COMPLETED SUCCESSFULLY")
@@ -117,7 +117,8 @@ def prepare_kernel_bundle(
     if username is None:
         username = get_kaggle_username()
 
-    clean_slug = f"ats-{run_id.replace('_', '-')}"[:50].lower()
+    clean_slug = f"ats-{run_id.replace('_', '-')}"[:45].lower()
+    clean_title = clean_slug.replace("-", " ").title()
 
     if output_dir is None:
         output_dir = PROJECT_ROOT / ".kaggle_kernels" / f"run_{run_id}"
@@ -125,7 +126,7 @@ def prepare_kernel_bundle(
 
     metadata = {
         "id": f"{username}/{clean_slug}",
-        "title": f"ATS Run {clean_slug}",
+        "title": clean_title,
         "code_file": "driver.py",
         "language": "python",
         "kernel_type": "script",
@@ -156,8 +157,14 @@ def prepare_kernel_bundle(
 
 
 def validate_results_dir(target_dir: Path) -> dict:
-    """Validate that metrics.json and required files exist in result directory."""
+    """Validate that metrics.json or j1_sweep_results.json exist in result directory."""
     metrics_file = target_dir / "metrics.json"
+    sweep_file = target_dir / "j1_sweep_results.json"
+
+    if sweep_file.exists():
+        with open(sweep_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+
     if not metrics_file.exists():
         raise FileNotFoundError(f"Missing metrics.json in {target_dir}")
 
@@ -228,8 +235,6 @@ def run_kaggle_job(config_path: str, device: str = "cpu", wait_seconds: int = 18
     metrics = validate_results_dir(out_dir)
     print("\n" + "=" * 60)
     print(f"   JOB {run_id} SUCCEEDED ON KAGGLE ({device.upper()})")
-    print(f"   Accuracy: {metrics.get('accuracy', 0.0):.4f}")
-    print(f"   Macro-F1: {metrics.get('macro_f1', 0.0):.4f}")
     print("=" * 60)
     return metrics
 
@@ -247,4 +252,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

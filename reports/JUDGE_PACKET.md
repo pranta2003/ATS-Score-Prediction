@@ -64,7 +64,18 @@ Metrics computed with **95% cluster-bootstrap confidence intervals**:
 
 ---
 
-## 6. Final Recommendations & Roadmap
+## 6. Key Architectural Decisions
+
+The engineering and modeling roadmap is governed by formal Architectural Decision Records (see [DECISIONS.md](DECISIONS.md)):
+- **ADR-001 (Control vs. Compute)**: Local workstation strictly limited to code editing, unit tests, and `<60s` smoke runs. Heavy multi-seed sweeps and deep learning run on Kaggle Cloud.
+- **ADR-002 (Document-Level Caching)**: Caches normalized unique document embeddings, assembling pair features via index slicing in 0.11s (~5,400x speedup).
+- **ADR-003 (Pre-Registered Grouped Protocols)**: Strict pre-registration of S1, S2, and S3 protocols to eliminate memorization leakage.
+- **ADR-004 (C5 Primary Benchmark)**: Focuses benchmarking on ground-truth human recruiter labels.
+- **ADR-005 (Vectorized Cluster Bootstrap)**: Multinomial matrix sampling computes 1,000 cluster CIs in 0.02s (~9,000x speedup).
+
+---
+
+## 7. Final Recommendations & Roadmap
 
 1. **Primary Model**: Deploy direct 3-class classifier (LightGBM on document interaction features + Late-Interaction MaxSim features).
 2. **Target Ceiling**: Accept **~65% accuracy (0.83 AUC)** under cold-resume conditions and **~55% accuracy (0.66-0.71 AUC)** under cold-JD/double-cold conditions as the true empirical ceiling on human recruiter labels.
@@ -72,7 +83,7 @@ Metrics computed with **95% cluster-bootstrap confidence intervals**:
 
 ---
 
-## 7. Reproduction Guide
+## 8. Reproduction Guide
 
 All steps are 100% deterministic with seed 42.
 
