@@ -32,3 +32,4 @@
     "xgboost": { "accuracy": 0.5133, "ci_95_accuracy": [0.3927, 0.6269], "macro_f1": 0.3789, "macro_roc_auc": 0.6678, "time_sec": 1301.03 }
   }
 }
+

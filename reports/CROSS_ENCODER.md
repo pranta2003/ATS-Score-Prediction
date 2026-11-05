@@ -63,3 +63,4 @@ We compare the fine-tuned Cross-Encoder directly against our gradient-boosted tr
    Under small-sample fine-tuning without hundreds of thousands of domain-specific recruiter judgments, cross-encoder self-attention overfits rapidly to the phrasing of training resumes and job descriptions. When presented with unseen vocabulary in both resumes and JDs (S3), its discrimination collapses toward chance (AUC = 0.5688).
 3. **The Regularization Advantage of Frozen Embeddings:**
    Frozen representations from `all-MiniLM-L6-v2` pre-trained on 1B+ sentence pairs preserve broad general semantic geometries. Tree ensembles constrained by shallow depth and feature subsampling regularize effectively, outperforming end-to-end fine-tuning by over +10% AUC on cold entities.
+

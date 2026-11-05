@@ -112,3 +112,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run_cross_encoder_suite(smoke=args.smoke, output_dir=args.output_dir)
+

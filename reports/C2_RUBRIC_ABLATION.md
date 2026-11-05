@@ -56,3 +56,4 @@ Both continuous regression ($R^2$, MAE, Pearson $r$) and 3-class binned classifi
    Unlike lexical features, dense semantic embeddings (F2) maintain stable predictive accuracy across splits ($R^2 = 0.2988$ in S1 vs. $R^2 = 0.3139$ in S2; AUC = 0.6716 in S1 vs. 0.6665 in S2). However, adding lexical and rubric heuristics under S2 actually degrades performance relative to dense semantics alone ($R^2$ drops from 0.3139 to 0.2867), proving that heuristic ATS rules overfit to training distributions.
 4. **Implications for Cross-Attention (J3):**
    Bi-encoder feature concatenation cannot break past $R^2 \approx 0.31$ (or ~55% accuracy) on unseen jobs. This provides the empirical rationale for testing cross-encoder architectures with full token-level cross-attention.
+
