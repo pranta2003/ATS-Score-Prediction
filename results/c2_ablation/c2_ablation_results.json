@@ -1,0 +1,104 @@
+{
+  "scenarios": {
+    "S1_cold_resume": {
+      "F1_Lexical": {
+        "regression": {
+          "r2": 0.1656713989028037,
+          "mae": 14.070393217205575,
+          "pearson_r": 0.4962451692094577
+        },
+        "classification": {
+          "accuracy": 0.5364464692482915,
+          "macro_f1": 0.5128933214279815,
+          "macro_roc_auc": 0.6963994622916925
+        }
+      },
+      "F2_DenseSemantic": {
+        "regression": {
+          "r2": 0.29875268128783294,
+          "mae": 13.357216252313304,
+          "pearson_r": 0.5475190570145851
+        },
+        "classification": {
+          "accuracy": 0.5227790432801822,
+          "macro_f1": 0.447251933506229,
+          "macro_roc_auc": 0.6715942041711997
+        }
+      },
+      "F3_RubricHeuristics": {
+        "regression": {
+          "r2": 0.16503747718651085,
+          "mae": 14.209663281236503,
+          "pearson_r": 0.44853311334692164
+        },
+        "classification": {
+          "accuracy": 0.5068337129840547,
+          "macro_f1": 0.4679899367741999,
+          "macro_roc_auc": 0.6578793041537973
+        }
+      },
+      "F4_CombinedFull": {
+        "regression": {
+          "r2": 0.44007374071686334,
+          "mae": 11.687890192816221,
+          "pearson_r": 0.6663416686122913
+        },
+        "classification": {
+          "accuracy": 0.5740318906605922,
+          "macro_f1": 0.5183587374891724,
+          "macro_roc_auc": 0.7189855595895924
+        }
+      }
+    },
+    "S2_cold_jd": {
+      "F1_Lexical": {
+        "regression": {
+          "r2": 0.01858312508430049,
+          "mae": 15.353999540675261,
+          "pearson_r": 0.3867035259690153
+        },
+        "classification": {
+          "accuracy": 0.4920273348519362,
+          "macro_f1": 0.4573424318587458,
+          "macro_roc_auc": 0.6346165942439318
+        }
+      },
+      "F2_DenseSemantic": {
+        "regression": {
+          "r2": 0.31392119302236876,
+          "mae": 12.875952060949032,
+          "pearson_r": 0.5625069220617254
+        },
+        "classification": {
+          "accuracy": 0.5318906605922551,
+          "macro_f1": 0.45387213249954056,
+          "macro_roc_auc": 0.6665118952195456
+        }
+      },
+      "F3_RubricHeuristics": {
+        "regression": {
+          "r2": 0.12143976752438435,
+          "mae": 14.609509539682435,
+          "pearson_r": 0.4221883095868755
+        },
+        "classification": {
+          "accuracy": 0.5182232346241458,
+          "macro_f1": 0.47747493888198966,
+          "macro_roc_auc": 0.63423234703762
+        }
+      },
+      "F4_CombinedFull": {
+        "regression": {
+          "r2": 0.2867266714052873,
+          "mae": 13.134563574427242,
+          "pearson_r": 0.5473099711504462
+        },
+        "classification": {
+          "accuracy": 0.5558086560364465,
+          "macro_f1": 0.48499389000092763,
+          "macro_roc_auc": 0.6838046995379289
+        }
+      }
+    }
+  }
+}
