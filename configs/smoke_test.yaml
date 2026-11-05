@@ -1,0 +1,15 @@
+dataset: "c5"
+scenario: "s1_cold_resume"
+model: "lightgbm"
+features: "minilm_interaction"
+seeds: [42, 43]
+n_splits: 3
+n_boot: 50
+model_params:
+  n_estimators: 20
+  max_depth: 3
+  learning_rate: 0.1
+  n_jobs: -1
+smoke: true
+smoke_samples: 200
+

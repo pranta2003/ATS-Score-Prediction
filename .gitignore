@@ -20,6 +20,10 @@ cache/
 *.zip
 features/*.npy
 
+# Allow committing experiment result files
+!results/
+!results/**
+
 # Kaggle / HF cache
 .kaggle/
 .cache/
@@ -27,4 +31,3 @@ features/*.npy
 # Testing & Logs
 .pytest_cache/
 *.log
-
