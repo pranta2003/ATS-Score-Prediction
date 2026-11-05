@@ -35,3 +35,4 @@ def get_adapter(name: str, **kwargs) -> BaseDatasetAdapter:
         if k.lower() == name_clean:
             return cls(**kwargs)
     raise KeyError(f"Adapter '{name}' not found. Available: {list_adapters()}")
+

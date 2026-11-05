@@ -46,3 +46,4 @@ class C1FitAdapter(BaseDatasetAdapter):
         df["source_dataset"] = self.name
 
         return df
+

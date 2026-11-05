@@ -1,0 +1,77 @@
+{
+  "control_vs_c1": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "control_vs_c2": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "control_vs_c3": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "control_vs_c4": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "control_vs_c5": {
+    "res_overlap": 0,
+    "jd_overlap": 7,
+    "pair_overlap": 0
+  },
+  "c1_vs_c2": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "c1_vs_c3": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "c1_vs_c4": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "c1_vs_c5": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "c2_vs_c3": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "c2_vs_c4": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "c2_vs_c5": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "c3_vs_c4": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "c3_vs_c5": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  },
+  "c4_vs_c5": {
+    "res_overlap": 0,
+    "jd_overlap": 0,
+    "pair_overlap": 0
+  }
+}

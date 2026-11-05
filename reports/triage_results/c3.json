@@ -1,0 +1,227 @@
+{
+  "dataset_key": "c3",
+  "metadata": {
+    "repo_id": "rahulrajpu676/job-resume-matching",
+    "license": "mit",
+    "summary": "Multi-table dataset (CV, Job, Matches) for matching/recommendation. Matches table computes final_score from semantic_score, skill_score, position_score, experience_score, etc.",
+    "leakage_cols": [
+      "semantic_score",
+      "skill_score",
+      "position_score",
+      "category_score",
+      "experience_score",
+      "education_score",
+      "raw_score"
+    ],
+    "is_regression": true,
+    "sample_size": 2500
+  },
+  "audit": {
+    "dataset_name": "rahulrajpu676/job-resume-matching",
+    "license": "mit",
+    "summary": "Multi-table dataset (CV, Job, Matches) for matching/recommendation. Matches table computes final_score from semantic_score, skill_score, position_score, experience_score, etc.",
+    "rows": 2500,
+    "entities": {
+      "unique_resumes": 2138,
+      "unique_jds": 560,
+      "unique_pairs": 2500,
+      "exact_duplicate_rows": 0,
+      "rows_per_resume": {
+        "mean": 1.1693171188026192,
+        "median": 1.0,
+        "p90": 2.0,
+        "p99": 3.0,
+        "max": 4.0
+      },
+      "rows_per_jd": {
+        "mean": 4.464285714285714,
+        "median": 3.0,
+        "p90": 11.0,
+        "p99": 15.409999999999968,
+        "max": 18.0
+      }
+    },
+    "text_lengths": {
+      "resume_chars": {
+        "mean": 1492.2188,
+        "median": 1441.5,
+        "p90": 2103.0,
+        "p99": 2753.289999999993,
+        "max": 3000.0
+      },
+      "jd_chars": {
+        "mean": 3030.1512,
+        "median": 2666.0,
+        "p90": 5390.0,
+        "p99": 7886.41999999999,
+        "max": 13639.0
+      },
+      "resume_words": {
+        "mean": 175.0564,
+        "median": 168.0,
+        "p90": 246.0999999999999,
+        "p99": 336.0299999999993,
+        "max": 388.0
+      },
+      "jd_words": {
+        "mean": 408.5384,
+        "median": 353.0,
+        "p90": 724.0,
+        "p99": 1083.079999999998,
+        "max": 1851.0
+      }
+    },
+    "token_truncation_minilm": {
+      "sample_size": 500,
+      "resume_tokens_mean": 309.64,
+      "resume_pct_over_256": 65.4,
+      "resume_pct_over_512": 2.6,
+      "jd_tokens_mean": 538.384,
+      "jd_pct_over_256": 82.8,
+      "jd_pct_over_512": 46.0
+    },
+    "label_analysis": {
+      "classes": {
+        "medium_positive": 1410,
+        "weak_positive": 1079,
+        "strong_positive": 11
+      },
+      "has_continuous": true,
+      "continuous_stats": {
+        "count": 2500,
+        "mean": 58.46946737469498,
+        "std": 3.539796683961967,
+        "min": 43.46659924121933,
+        "p25": 56.34568282426174,
+        "median": 58.581638162664746,
+        "p75": 60.625828606859955,
+        "max": 72.77681312000045
+      },
+      "continuous_binned": {
+        "preregistered_bins": {
+          "<40": 0,
+          "40-70": 2497,
+          ">70": 3
+        },
+        "median_binary_split": {
+          "median_threshold": 58.581638162664746,
+          "<=median": 1250,
+          ">median": 1250
+        }
+      }
+    }
+  },
+  "provenance": {
+    "dataset": "rahulrajpu676/job-resume-matching",
+    "correlations": {
+      "tfidf_cosine": {
+        "spearman": 0.24303817008610726,
+        "pearson": 0.18014805924549976
+      },
+      "keyword_overlap": {
+        "spearman": 0.1317102982182352,
+        "pearson": 0.12324407666880514
+      },
+      "fuzzy_match": {
+        "spearman": -0.08932905205941896,
+        "pearson": -0.07080184776017326
+      },
+      "embedding_cosine": {
+        "spearman": 0.21212252942760473,
+        "pearson": 0.19508807744552478
+      }
+    },
+    "lexical_only_r2": 0.05733801216757184,
+    "lexical_only_accuracy": null,
+    "provenance": "FORMULA-DERIVED",
+    "evidence": "Label is computed via synthetic compatibility / weighting formula."
+  },
+  "leakage_columns_excluded": [
+    "semantic_score",
+    "skill_score",
+    "position_score",
+    "category_score",
+    "experience_score",
+    "education_score",
+    "raw_score"
+  ],
+  "baselines": {
+    "cold_start_resume": {
+      "tfidf_lightgbm": {
+        "r2": 0.43882210270530253,
+        "mae": 1.897288715055056,
+        "spearman_rho": 0.6686127052515275,
+        "accuracy": 0.9988,
+        "macro_f1": 0.4996998198919352,
+        "balanced_accuracy": 0.5,
+        "majority_baseline": 0.9988,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.9972188007343933,
+          1.0
+        ],
+        "ci_95_macro_f1": [
+          0.4993037319534486,
+          1.0
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": 0.39863577212327594,
+        "mae": 1.965575204512027,
+        "spearman_rho": 0.6474892522702803,
+        "accuracy": 0.9988,
+        "macro_f1": 0.4996998198919352,
+        "balanced_accuracy": 0.5,
+        "majority_baseline": 0.9988,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.9972188007343933,
+          1.0
+        ],
+        "ci_95_macro_f1": [
+          0.4993037319534486,
+          1.0
+        ]
+      }
+    },
+    "cold_start_jd": null,
+    "warm_start_random": {
+      "tfidf_lightgbm": {
+        "r2": 0.4422759556178295,
+        "mae": 1.9047036111838476,
+        "spearman_rho": 0.6686406724872656,
+        "accuracy": 0.9988,
+        "macro_f1": 0.4996998198919352,
+        "balanced_accuracy": 0.5,
+        "majority_baseline": 0.9988,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.9972188007343933,
+          1.0
+        ],
+        "ci_95_macro_f1": [
+          0.4993037319534486,
+          1.0
+        ]
+      },
+      "minilm_lightgbm": {
+        "r2": 0.3994638378171286,
+        "mae": 1.9603745877242835,
+        "spearman_rho": 0.6529516999922721,
+        "accuracy": 0.9988,
+        "macro_f1": 0.4996998198919352,
+        "balanced_accuracy": 0.5,
+        "majority_baseline": 0.9988,
+        "macro_roc_auc": null,
+        "ci_95_accuracy": [
+          0.9972188007343933,
+          1.0
+        ],
+        "ci_95_macro_f1": [
+          0.4993037319534486,
+          1.0
+        ]
+      }
+    }
+  }
+}
