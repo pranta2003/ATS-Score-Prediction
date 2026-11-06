@@ -1,0 +1,15 @@
+dataset: c5
+models:
+- majority
+- jd_prior
+- resume_prior
+- logistic
+- lightgbm
+- xgboost
+scenarios:
+- s1_cold_resume
+- s2_cold_jd
+- s3_double_cold
+script: scripts/run_j1_sweep.py
+seeds: 20
+task: j1_sweep
