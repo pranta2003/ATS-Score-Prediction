@@ -1,0 +1,21 @@
+# Config for Rigorous Cross-Encoder vs Bi-Encoder Study
+name: "ats-c5-ce-vs-bi"
+dataset: "c5"
+script: "scripts/run_cross_encoder_study.py"
+args:
+  --epochs: 3
+  --batch_size: 32
+  --lr: 2e-5
+  --output_dir: "results/ce_vs_bi"
+output_artifacts:
+  - "results/ce_vs_bi/study_results.json"
+  - "results/ce_vs_bi/study_predictions.parquet"
+  - "splits"
+requirements:
+  - "torch>=2.0.0"
+  - "transformers>=4.30.0"
+  - "lightgbm>=4.0.0"
+  - "scikit-learn>=1.3.0"
+  - "pyarrow"
+  - "fastparquet"
+
