@@ -1,0 +1,26 @@
+{
+  "current_pytorch": {
+    "mode": "current_pytorch",
+    "base_rss_mb": 36.77,
+    "peak_rss_mb": 508.59,
+    "cold_start_s": 32.811,
+    "total_inference_s": 16.221,
+    "latency_per_pair_ms": 324.42
+  },
+  "minimal_onnx": {
+    "mode": "minimal_onnx",
+    "base_rss_mb": 36.95,
+    "peak_rss_mb": 521.79,
+    "cold_start_s": 24.709,
+    "total_inference_s": 22.354,
+    "latency_per_pair_ms": 447.09
+  },
+  "precomputed_lookup": {
+    "mode": "precomputed_lookup",
+    "base_rss_mb": 36.93,
+    "peak_rss_mb": 153.93,
+    "cold_start_s": 3.373,
+    "total_inference_s": 0.08,
+    "latency_per_pair_ms": 1.6
+  }
+}
