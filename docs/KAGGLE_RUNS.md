@@ -46,3 +46,4 @@ To eliminate the vulnerability of late-stage batch persistence failure, `scripts
 1. **Directory Guarantee:** `os.makedirs(os.path.dirname(out_json), exist_ok=True)` executed before any evaluation.
 2. **Incremental Checkpointing:** Each completed scenario, model, and seed writes an individual atomic JSON file into `results/j1_sweep/incremental/<scenario>_<model>_<seed>.json` with `fsync()`.
 3. **Checksum Manifest:** A `manifest.json` recording SHA-256 hashes of each incremental result file is updated after each checkpoint, guaranteeing data integrity.
+

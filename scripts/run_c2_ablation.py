@@ -123,12 +123,12 @@ def run_c2_ablation(smoke: bool = False, output_dir: str = "results/c2_ablation"
                 y_cls_tr = y_cls[tr_idx]
 
                 # Regression model (predicting continuous GPT-4o score)
-                reg = lgb.LGBMRegressor(n_estimators=100, random_state=42, verbose=-1)
+                reg = lgb.LGBMRegressor(n_estimators=20 if smoke else 100, random_state=42, verbose=-1)
                 reg.fit(X_tr, y_reg_tr)
                 oof_reg[te_idx] = reg.predict(X_te)
 
                 # Classification model (predicting 3-class binned target)
-                clf = lgb.LGBMClassifier(n_estimators=100, random_state=42, verbose=-1)
+                clf = lgb.LGBMClassifier(n_estimators=20 if smoke else 100, random_state=42, verbose=-1)
                 clf.fit(X_tr, y_cls_tr)
                 oof_cls_preds[te_idx] = clf.predict(X_te)
                 oof_cls_probs[te_idx] = clf.predict_proba(X_te)

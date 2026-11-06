@@ -3,8 +3,8 @@
 **Author:** Senior Machine Learning Engineer  
 **Date:** November 6, 2026  
 **Status:** Completed via Remote Kaggle Compute (`ats-c2-scen-mod-174278cf`)  
-**Dataset:** `netsol/resume-score-details` (C2) (4,858 pairs; 4,716 valid with continuous scores, 142 invalid nulls dropped)  
-**Entities:** 1,220 unique resumes, 1,000 unique job descriptions  
+**Dataset:** `netsol/resume-score-details` (C2) (1,020 audited rows; 878 valid pairs with continuous scores after dropping null/invalid targets)  
+**Entities:** 209 unique resumes, 26 unique job descriptions  
 **Compute Execution:** Kaggle Cloud CPU (Kernel: `prantakumerpandit390/ats-c2-scen-mod-174278cf`, execution time: ~10 minutes)  
 **Branch:** `exp/c2-rubric`  
 
