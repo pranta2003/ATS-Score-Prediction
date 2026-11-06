@@ -212,6 +212,14 @@ def run_kaggle_job(config_path: str, device: str = "cpu", wait_seconds: int = 18
     kaggle_env = os.environ.copy()
     kaggle_env["PYTHONIOENCODING"] = "utf-8"
     kaggle_env["PYTHONUTF8"] = "1"
+    if "KAGGLE_API_TOKEN" not in kaggle_env:
+        try:
+            tok_res = subprocess.run(["kaggle", "auth", "print-access-token"], capture_output=True, text=True, shell=True)
+            lines = [l.strip() for l in tok_res.stdout.splitlines() if l.strip() and not l.strip().startswith("Warning:")]
+            if lines:
+                kaggle_env["KAGGLE_API_TOKEN"] = lines[-1]
+        except Exception:
+            pass
     push_res = subprocess.run(["kaggle", "kernels", "push", "-p", str(kernel_dir)], capture_output=True, text=True, shell=True, env=kaggle_env)
     if push_res.returncode != 0:
         raise RuntimeError(f"Failed to push kernel:\n{push_res.stderr}\n{push_res.stdout}")
