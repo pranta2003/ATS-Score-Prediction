@@ -21,7 +21,7 @@ Every Kaggle kernel executed across the project's cloud compute phases is catalo
 | `prantakumerpandit390/ats-c5-scen-mod-ec22929c` | J3 Cross-Encoder | GPU (2x T4) | 1,065s (~17.75m) | **COMPLETE** | Written File (`cross_encoder_results.json`) | None (Pilot, S2, and S3 completed successfully). |
 | `prantakumerpandit390/ats-c5-scen-mod-9dd67db7` | J1 Sweep Re-run | CPU (4-Core) | ~3,500s (~58m) | **COMPLETE** | Written File (`manifest.json` & `metrics.json`) | Validated: Max absolute diff vs reconstructed stdout was 0.0050 percentage points (strictly $\le 1.0$ point threshold). |
 | `prantakumerpandit390/ats-c5-scen-lightgbm-068737a8` | C5 Feature Ablation | CPU (4-Core) | ~7,100s (~118m) | **COMPLETE** | Written File (`c5_feature_ablation_results.json`) | Completed successfully across Tiers T1 to T5, S1, S2, S3 (20 seeds) with paired cluster-bootstrap CIs. |
-| `prantakumerpandit390/ats-c5-scen-mod-bd47431f` | Cross-Encoder vs Bi-Encoder Study | GPU (2x T4) | In Progress | **RUNNING** | Active Kernel | Running multi-seed (seeds 42, 43, 44) S2 & S3 evaluation with identical split ID files. |
+| `prantakumerpandit390/ats-c5-scen-mod-bd47431f` | Cross-Encoder vs Bi-Encoder Study | GPU (2x T4) | 3,186s (~53.1m) | **COMPLETE** | Written File (`study_results.json` & `study_predictions.parquet`) | Completed multi-seed (seeds 42, 43, 44) S2 & S3 evaluation with identical split ID files. Verified CE underperformed Bi-Encoder. |
 
 ---
 
