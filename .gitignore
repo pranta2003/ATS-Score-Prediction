@@ -32,3 +32,5 @@ features/*.npy
 # Testing & Logs
 .pytest_cache/
 *.log
+results/smoke_*/
+results/test_*/

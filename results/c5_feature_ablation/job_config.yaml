@@ -1,0 +1,6 @@
+dataset: c5
+description: 'C5 Feature Ablation Study: Tiers T1 to T5 across S1, S2, and S3 (20
+  seeds) with Paired Bootstrap CIs'
+device: cpu
+model: lightgbm
+script: scripts/run_c5_feature_ablation.py

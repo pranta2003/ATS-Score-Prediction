@@ -1,0 +1,110 @@
+{
+  "S1_cold_resume_majority.json": {
+    "sha256": "89ac43e53aedfb0657339103e138f6ac698e26a22d16a3c9548379bf8b3a34bb",
+    "scenario": "S1_cold_resume",
+    "model": "majority",
+    "timestamp": 1793932274.627078
+  },
+  "S1_cold_resume_jd_prior.json": {
+    "sha256": "0711c632891cdcd66656289c1827a5d54f5c345434815c61f306f0c4afed3a7b",
+    "scenario": "S1_cold_resume",
+    "model": "jd_prior",
+    "timestamp": 1793932275.6917036
+  },
+  "S1_cold_resume_resume_prior.json": {
+    "sha256": "366376937529719d6b427445a03963cbec794031f2b08d072d31e8493f7e352a",
+    "scenario": "S1_cold_resume",
+    "model": "resume_prior",
+    "timestamp": 1793932277.6637826
+  },
+  "S1_cold_resume_logistic.json": {
+    "sha256": "9de09ae11224bda5ff34fc542de0c1b17ea03bc26de685ae2c558d27aaec90cd",
+    "scenario": "S1_cold_resume",
+    "model": "logistic",
+    "timestamp": 1793932414.7773278
+  },
+  "S1_cold_resume_lightgbm.json": {
+    "sha256": "5e66f2fa71e043bb290d823a3d86b588b3640a1d205c5a865fc73fe3fadceb6e",
+    "scenario": "S1_cold_resume",
+    "model": "lightgbm",
+    "timestamp": 1793933254.2573712
+  },
+  "S1_cold_resume_xgboost.json": {
+    "sha256": "581631f0cb21acdd02afa6f3c42bf5d50aca1cfb5d4a0c452682a68965994d18",
+    "scenario": "S1_cold_resume",
+    "model": "xgboost",
+    "timestamp": 1793935005.4932597
+  },
+  "S2_cold_jd_majority.json": {
+    "sha256": "4534479651a8301149eacc749a6a45848d87bd7e43ac2c9ced0e6b85cba9be66",
+    "scenario": "S2_cold_jd",
+    "model": "majority",
+    "timestamp": 1793935005.6284482
+  },
+  "S2_cold_jd_jd_prior.json": {
+    "sha256": "03dec908e08f9a97093330bbdaafe6f2e2d3b64f68639961217d9c60b3a674aa",
+    "scenario": "S2_cold_jd",
+    "model": "jd_prior",
+    "timestamp": 1793935006.5470984
+  },
+  "S2_cold_jd_resume_prior.json": {
+    "sha256": "36d063c4e1a9c42f49959770b49166dc93e7aaca6784381158bbb7f9279acf9a",
+    "scenario": "S2_cold_jd",
+    "model": "resume_prior",
+    "timestamp": 1793935008.4005158
+  },
+  "S2_cold_jd_logistic.json": {
+    "sha256": "c11de75087214495f754d335790d503dcce3be64f558037b5f3360cc9a33464b",
+    "scenario": "S2_cold_jd",
+    "model": "logistic",
+    "timestamp": 1793935136.2841816
+  },
+  "S2_cold_jd_lightgbm.json": {
+    "sha256": "9034ce089c0228c52b2fb44fe3ea7f064f4d254bbaf204bcf6900c156578a61d",
+    "scenario": "S2_cold_jd",
+    "model": "lightgbm",
+    "timestamp": 1793935988.4225066
+  },
+  "S2_cold_jd_xgboost.json": {
+    "sha256": "1ab82d54668779e14a8906458069af60ea58d16a8538a457bc07a5643cd5dd40",
+    "scenario": "S2_cold_jd",
+    "model": "xgboost",
+    "timestamp": 1793937789.1395192
+  },
+  "S3_double_cold_majority.json": {
+    "sha256": "ea68137b26b3cb916cfc2adede20c11ca51defa82207fb69be0373f2605c8a7d",
+    "scenario": "S3_double_cold",
+    "model": "majority",
+    "timestamp": 1793937789.7162504
+  },
+  "S3_double_cold_jd_prior.json": {
+    "sha256": "b2c3170222d3c25489392441b0822bfa9a505be9220f2483c41db8caacee6f99",
+    "scenario": "S3_double_cold",
+    "model": "jd_prior",
+    "timestamp": 1793937793.3974504
+  },
+  "S3_double_cold_resume_prior.json": {
+    "sha256": "4fde13e8d0970ffe5c72611d8f90889f891356c22fc1cf0b530eba764f375954",
+    "scenario": "S3_double_cold",
+    "model": "resume_prior",
+    "timestamp": 1793937799.8323386
+  },
+  "S3_double_cold_logistic.json": {
+    "sha256": "b1787e93ea3d86055290a39425eb0a0b69db144a2349a99c33dae9554e477c23",
+    "scenario": "S3_double_cold",
+    "model": "logistic",
+    "timestamp": 1793937897.5054374
+  },
+  "S3_double_cold_lightgbm.json": {
+    "sha256": "17a7ed5708ad84ce09b82cf602a2939a2664eee1d4596527f4f0cf29a3868ab5",
+    "scenario": "S3_double_cold",
+    "model": "lightgbm",
+    "timestamp": 1793938551.8796308
+  },
+  "S3_double_cold_xgboost.json": {
+    "sha256": "af206db3527f471c6121b26fdd07184fd9e8293cb55815cd83961de1c0f3efc4",
+    "scenario": "S3_double_cold",
+    "model": "xgboost",
+    "timestamp": 1793939934.9237032
+  }
+}
