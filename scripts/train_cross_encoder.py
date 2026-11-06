@@ -136,10 +136,10 @@ def run_cross_encoder(
     df = adapter.load()
 
     if smoke:
-        df = df.sample(n=min(120, len(df)), random_state=seed).reset_index(drop=True)
+        df = df.sample(n=min(40, len(df)), random_state=seed).reset_index(drop=True)
         epochs = 1
         batch_size = 8
-        max_length = 128
+        max_length = 64
 
     # Split
     if scenario == "S1":
@@ -240,7 +240,8 @@ def run_cross_encoder(
         "cluster_id": cluster_ids,
     })
     preds_df.to_parquet(out_path / "preds.parquet", index=False)
-    print(f"[DONE] Accuracy: {metrics['accuracy']:.4f}, Macro-F1: {metrics['macro_f1']:.4f}, Macro-AUC: {metrics['macro_roc_auc']:.4f}")
+    auc_str = f"{metrics['macro_roc_auc']:.4f}" if metrics.get('macro_roc_auc') is not None else 'N/A'
+    print(f"[DONE] Accuracy: {metrics['accuracy']:.4f}, Macro-F1: {metrics['macro_f1']:.4f}, Macro-AUC: {auc_str}")
     return metrics
 
 

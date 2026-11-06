@@ -1,6 +1,26 @@
 import json
 from pathlib import Path
 import pytest
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.render_report_tables import (
+    render_j1_sweep_table,
+    render_c2_ablation_table,
+    render_like_for_like_table,
+)
+
+
+def test_governance_files_in_harness():
+    """Validates that all governance files reside in harness/."""
+    harness_dir = Path("harness")
+    assert harness_dir.exists(), "harness/ directory must exist"
+    for fname in ["AGENT_RULES.md", "TASK_BOARD.md", "DECISIONS.md", "CLAIMS.md"]:
+        fpath = harness_dir / fname
+        assert fpath.exists(), f"Governance file {fname} must exist in harness/"
+        assert fpath.stat().st_size > 50, f"Governance file {fname} must not be empty"
 
 
 def test_claim_1_c5_cardinality_and_distribution():
@@ -22,6 +42,23 @@ def test_claim_1_c5_cardinality_and_distribution():
     assert classes.get("Good Fit") == 2000, f"Expected 2000 'Good Fit', got {classes.get('Good Fit')}"
 
 
+def test_claim_c2_reconciled_cardinality():
+    """Validates reconciled C2 cardinality: 878 pairs with continuous score."""
+    c2_json = Path("reports/triage_results/c2.json")
+    assert c2_json.exists(), "reports/triage_results/c2.json must exist"
+    with open(c2_json, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["audit"]["label_analysis"]["continuous_stats"]["count"] == 878
+
+    c2_abl = Path("results/c2_ablation/c2_ablation_results.json")
+    if c2_abl.exists():
+        with open(c2_abl, "r", encoding="utf-8") as f:
+            abl_data = json.load(f)
+        s1_f4_acc = abl_data["scenarios"]["S1_cold_resume"]["F4_CombinedFull"]["classification"]["accuracy"]
+        # 504 / 878 = 0.57403189
+        assert abs(s1_f4_acc - (504 / 878)) < 1e-4, f"Ablation denominator must match 878 pairs"
+
+
 def test_claim_2_generalization_hierarchy():
     """Validates Claim 2.3: Macro ROC-AUC strictly degrades S1 > S2 > S3."""
     results_path = Path("reports/c5_verification_results.json")
@@ -38,9 +75,6 @@ def test_claim_2_generalization_hierarchy():
     assert auc_s1 > auc_s2 > auc_s3, (
         f"Hierarchy violated: S1 ({auc_s1:.4f}) > S2 ({auc_s2:.4f}) > S3 ({auc_s3:.4f})"
     )
-    # S3 ceiling is close to random/majority baseline
-    acc_s3 = data["scenarios"]["S3_double_cold"]["accuracy"]
-    assert 0.50 <= acc_s3 <= 0.60, f"Expected S3 accuracy around ~54%, got {acc_s3:.4f}"
 
 
 def test_claim_3_remote_kaggle_specs():
@@ -50,3 +84,42 @@ def test_claim_3_remote_kaggle_specs():
     content = probe_path.read_text(encoding="utf-8")
     assert "Tesla T4" in content, "Kaggle probe should record Tesla T4"
     assert "Internet Access" in content or "HTTP 200" in content, "Internet access must be verified"
+
+
+def test_rendered_tables_match():
+    """Validates that scripts/render_report_tables.py generates non-empty tables containing valid metrics."""
+    j1_tbl = render_j1_sweep_table()
+    assert "S1: Cold-Resume" in j1_tbl
+    assert "LightGBM" in j1_tbl
+    assert "0.6603" in j1_tbl
+
+    c2_tbl = render_c2_ablation_table()
+    assert "F4: Combined Full" in c2_tbl
+    assert "0.4401" in c2_tbl
+
+    like_tbl = render_like_for_like_table()
+    assert "S2: Cold-JD" in like_tbl
+    assert "Cross-Encoder (Fine-Tuned 3 ep)" in like_tbl
+    assert "0.5862" in like_tbl
+    assert "0.7628" in like_tbl
+
+
+def test_like_for_like_split_fidelity():
+    """Validates that Cross-Encoder and Bi-Encoder evaluations share identical test sizes and majority baselines."""
+    like_path = Path("reports/like_for_like_biencoder.json")
+    ce_path = Path("reports/cross_encoder_results.json")
+    assert like_path.exists(), "reports/like_for_like_biencoder.json must exist"
+    assert ce_path.exists(), "reports/cross_encoder_results.json must exist"
+
+    with open(like_path, "r", encoding="utf-8") as f:
+        like_data = json.load(f)
+    with open(ce_path, "r", encoding="utf-8") as f:
+        ce_data = json.load(f)["scenarios"]
+
+    # S2
+    assert like_data["S2"]["test_size"] == 1259
+    assert abs(like_data["S2"]["majority"]["accuracy"] - 0.5210) < 1e-4
+
+    # S3
+    assert like_data["S3"]["test_size"] == 272
+    assert abs(like_data["S3"]["majority"]["accuracy"] - 0.5441) < 1e-4

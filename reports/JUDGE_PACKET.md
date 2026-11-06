@@ -66,7 +66,7 @@ Metrics computed with **95% cluster-bootstrap confidence intervals**:
 
 ## 6. Key Architectural Decisions
 
-The engineering and modeling roadmap is governed by formal Architectural Decision Records (see [DECISIONS.md](DECISIONS.md)):
+The engineering and modeling roadmap is governed by formal Architectural Decision Records (see [DECISIONS.md](harness/DECISIONS.md)):
 - **ADR-001 (Control vs. Compute)**: Local workstation strictly limited to code editing, unit tests, and `<60s` smoke runs. Heavy multi-seed sweeps and deep learning run on Kaggle Cloud.
 - **ADR-002 (Document-Level Caching)**: Caches normalized unique document embeddings, assembling pair features via index slicing in 0.11s (~5,400x speedup).
 - **ADR-003 (Pre-Registered Grouped Protocols)**: Strict pre-registration of S1, S2, and S3 protocols to eliminate memorization leakage.
