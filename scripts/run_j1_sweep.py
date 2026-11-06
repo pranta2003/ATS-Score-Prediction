@@ -18,6 +18,42 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.ats.adapters.registry import get_adapter
 from src.ats.embeddings import build_pair_features
 from src.ats.evaluation import vectorized_cluster_bootstrap_acc_f1
+import hashlib
+
+def save_incremental(scenario: str, model_name: str, data: dict, results_dir: Path):
+    """Write an atomic JSON result for a single scenario/model and update manifest with SHA-256."""
+    inc_dir = results_dir / "incremental"
+    inc_dir.mkdir(parents=True, exist_ok=True)
+    fname = f"{scenario}_{model_name}.json"
+    file_path = inc_dir / fname
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+
+    manifest_path = inc_dir / "manifest.json"
+    manifest = {}
+    if manifest_path.exists():
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as mf:
+                manifest = json.load(mf)
+        except Exception:
+            manifest = {}
+
+    with open(file_path, "rb") as bf:
+        sha256 = hashlib.sha256(bf.read()).hexdigest()
+
+    manifest[fname] = {
+        "sha256": sha256,
+        "scenario": scenario,
+        "model": model_name,
+        "timestamp": time.time(),
+    }
+    with open(manifest_path, "w", encoding="utf-8") as mf:
+        json.dump(manifest, mf, indent=2)
+        mf.flush()
+        os.fsync(mf.fileno())
+
 
 
 def fit_predict_model(model_name, X_tr, y_tr, X_te, df_tr, df_te, num_classes=3, seed=42):
@@ -217,6 +253,7 @@ def run_j1_sweep():
             "time_sec": round(time.time() - t_mod, 2),
         }
         print(f"Acc: {avg_acc:.4f} | Macro-F1: {avg_f1:.4f} | AUC: {avg_auc:.4f} ({all_results['S1_cold_resume'][model_name]['time_sec']}s)")
+        save_incremental("S1_cold_resume", model_name, all_results["S1_cold_resume"][model_name], PROJECT_ROOT / "results" / "j1_sweep")
 
     # --- SCENARIO S2: Cold-JD (GroupKFold by jd_id) ---
     print("\n" + "-" * 50)
@@ -257,6 +294,7 @@ def run_j1_sweep():
             "time_sec": round(time.time() - t_mod, 2),
         }
         print(f"Acc: {avg_acc:.4f} | Macro-F1: {avg_f1:.4f} | AUC: {avg_auc:.4f} ({all_results['S2_cold_jd'][model_name]['time_sec']}s)")
+        save_incremental("S2_cold_jd", model_name, all_results["S2_cold_jd"][model_name], PROJECT_ROOT / "results" / "j1_sweep")
 
     # --- SCENARIO S3: Double-Cold (Disjoint 15% holdouts, 20 Seeds) ---
     print("\n" + "-" * 50)
@@ -312,6 +350,7 @@ def run_j1_sweep():
             "time_sec": round(time.time() - t_mod, 2),
         }
         print(f"Acc: {avg_acc:.4f} [CI: {ci_acc[0]:.4f}, {ci_acc[1]:.4f}] | Macro-F1: {avg_f1:.4f} | AUC: {avg_auc:.4f} ({all_results['S3_double_cold'][model_name]['time_sec']}s)")
+        save_incremental("S3_double_cold", model_name, all_results["S3_double_cold"][model_name], PROJECT_ROOT / "results" / "j1_sweep")
 
     total_time = round(time.time() - t0, 2)
     print("\n" + "=" * 65)
