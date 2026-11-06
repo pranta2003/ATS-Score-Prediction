@@ -158,6 +158,41 @@ def generate_judge_packet():
     ctl_audit_baselines = ctl.get("baselines", {}).get("cold_start_resume", {}) if ctl else {}
     ctl_regr_acc = fmt(ctl_audit_baselines.get("minilm_lightgbm", {}).get("accuracy"), pct=True)
 
+    # C5 Feature Ablation values
+    ablation_file = reports_dir / "c5_feature_ablation_results.json"
+    if ablation_file.exists():
+        with open(ablation_file, "r", encoding="utf-8") as f:
+            abl = json.load(f)
+        t_tiers = abl.get("tiers", {})
+
+        def get_acc(tier_key, scen):
+            val = t_tiers.get(tier_key, {}).get(scen, {}).get("accuracy")
+            if isinstance(val, dict):
+                return val.get("mean")
+            return val
+
+        t1_s1 = fmt(get_acc("T1_Lexical", "S1_cold_resume"), pct=True)
+        t1_s2 = fmt(get_acc("T1_Lexical", "S2_cold_jd"), pct=True)
+        t1_s3 = fmt(get_acc("T1_Lexical", "S3_double_cold"), pct=True)
+
+        t2_s1 = fmt(get_acc("T2_Dense", "S1_cold_resume"), pct=True)
+        t2_s2 = fmt(get_acc("T2_Dense", "S2_cold_jd"), pct=True)
+        t2_s3 = fmt(get_acc("T2_Dense", "S3_double_cold"), pct=True)
+
+        t3_s1 = fmt(get_acc("T3_LateInteraction", "S1_cold_resume"), pct=True)
+        t3_s2 = fmt(get_acc("T3_LateInteraction", "S2_cold_jd"), pct=True)
+        t3_s3 = fmt(get_acc("T3_LateInteraction", "S3_double_cold"), pct=True)
+
+        t4_s1 = fmt(get_acc("T4_LexicalDense", "S1_cold_resume"), pct=True)
+        t4_s2 = fmt(get_acc("T4_LexicalDense", "S2_cold_jd"), pct=True)
+        t4_s3 = fmt(get_acc("T4_LexicalDense", "S3_double_cold"), pct=True)
+
+        t5_s1 = fmt(get_acc("T5_Full", "S1_cold_resume"), pct=True)
+        t5_s2 = fmt(get_acc("T5_Full", "S2_cold_jd"), pct=True)
+        t5_s3 = fmt(get_acc("T5_Full", "S3_double_cold"), pct=True)
+    else:
+        t1_s1 = t1_s2 = t1_s3 = t2_s1 = t2_s2 = t2_s3 = t3_s1 = t3_s2 = t3_s3 = t4_s1 = t4_s2 = t4_s3 = t5_s1 = t5_s2 = t5_s3 = "NOT AVAILABLE"
+
     packet = f"""# ATS Score Prediction — Judge Packet & Technical Evaluation
 
 > **Notice**: All table cells, statistics, and confidence intervals in this document are programmatically parsed from verified JSON artifacts produced by execution runs (`reports/triage_results/*.json`, `reports/c5_verification_results.json`, `reports/j1_sweep_results.json`, `reports/like_for_like_biencoder.json`, `reports/cross_encoder_results.json`, and `reports/c2_ablation_results.json`). Missing values are explicitly flagged as `NOT AVAILABLE` rather than guessed.

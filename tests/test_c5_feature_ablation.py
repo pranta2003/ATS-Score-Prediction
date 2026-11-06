@@ -35,3 +35,4 @@ def test_c5_feature_ablation_smoke():
         assert "S1_cold_resume" in data["tiers"][tier]
         assert "S2_cold_jd" in data["tiers"][tier]
         assert "S3_double_cold" in data["tiers"][tier]
+

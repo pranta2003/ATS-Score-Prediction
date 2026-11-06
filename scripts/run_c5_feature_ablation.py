@@ -207,12 +207,12 @@ def run_c5_feature_ablation(smoke: bool = False, output_dir: str = "results/c5_f
 
     if smoke:
         # Sample deterministic subset for rapid smoke verification
-        df = df.sample(n=min(150, len(df)), random_state=42).reset_index(drop=True)
+        df = df.sample(n=min(100, len(df)), random_state=42).reset_index(drop=True)
         s3_seeds = [42, 43]
-        n_estimators = 20
+        n_estimators = 10
         max_depth = 3
         num_leaves = 7
-        n_boot = 50
+        n_boot = 20
     else:
         s3_seeds = [42 + i for i in range(20)]
         n_estimators = 300
@@ -294,7 +294,7 @@ def run_c5_feature_ablation(smoke: bool = False, output_dir: str = "results/c5_f
 
     for name, feat in tiers.items():
         t_start = time.time()
-        preds, probs = evaluate_scenario_folds(feat, y, groups_res, lgb_params, n_splits=5 if not smoke else 3)
+        preds, probs = evaluate_scenario_folds(feat, y, groups_res, lgb_params, n_splits=5 if not smoke else 2)
         metrics = compute_classification_metrics(y, preds, probs)
         ci_acc, ci_f1 = vectorized_cluster_bootstrap_acc_f1(y, preds, groups_res, n_boot=n_boot, seed=42)
         metrics["ci_95_accuracy"] = ci_acc
@@ -332,7 +332,7 @@ def run_c5_feature_ablation(smoke: bool = False, output_dir: str = "results/c5_f
 
     for name, feat in tiers.items():
         t_start = time.time()
-        preds, probs = evaluate_scenario_folds(feat, y, groups_jd, lgb_params, n_splits=5 if not smoke else 3)
+        preds, probs = evaluate_scenario_folds(feat, y, groups_jd, lgb_params, n_splits=5 if not smoke else 2)
         metrics = compute_classification_metrics(y, preds, probs)
         ci_acc, ci_f1 = vectorized_cluster_bootstrap_acc_f1(y, preds, groups_jd, n_boot=n_boot, seed=42)
         metrics["ci_95_accuracy"] = ci_acc
