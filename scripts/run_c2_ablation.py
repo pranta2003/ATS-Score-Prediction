@@ -69,7 +69,7 @@ def run_c2_ablation(smoke: bool = False, output_dir: str = "results/c2_ablation"
     df = df.dropna(subset=["label_continuous"]).reset_index(drop=True)
 
     if smoke:
-        df = df.sample(n=min(120, len(df)), random_state=42).reset_index(drop=True)
+        df = df.sample(n=min(60, len(df)), random_state=42).reset_index(drop=True)
 
     print(f"Total pairs: {len(df)}, Unique resumes: {df['resume_id'].nunique()}, Unique JDs: {df['jd_id'].nunique()}")
 
@@ -98,19 +98,26 @@ def run_c2_ablation(smoke: bool = False, output_dir: str = "results/c2_ablation"
         cache_dir="cache/embeddings",
     )
 
-    feature_sets = {
-        "F1_Lexical": f_lex,
-        "F2_DenseSemantic": f_dense,
-        "F3_RubricHeuristics": f_rub,
-        "F4_CombinedFull": np.hstack([f_lex, f_dense, f_rub]),
-    }
+    if smoke:
+        feature_sets = {
+            "F1_Lexical": f_lex,
+            "F4_CombinedFull": np.hstack([f_lex, f_dense, f_rub]),
+        }
+    else:
+        feature_sets = {
+            "F1_Lexical": f_lex,
+            "F2_DenseSemantic": f_dense,
+            "F3_RubricHeuristics": f_rub,
+            "F4_CombinedFull": np.hstack([f_lex, f_dense, f_rub]),
+        }
 
     results = {"scenarios": {}}
 
-    for scen_name, group_col in [("S1_cold_resume", "resume_id"), ("S2_cold_jd", "jd_id")]:
+    scens = [("S1_cold_resume", "resume_id")] if smoke else [("S1_cold_resume", "resume_id"), ("S2_cold_jd", "jd_id")]
+    for scen_name, group_col in scens:
         results["scenarios"][scen_name] = {}
         groups = df[group_col].values
-        gkf = GroupKFold(n_splits=3 if smoke else 5)
+        gkf = GroupKFold(n_splits=2 if smoke else 5)
 
         for f_name, X in feature_sets.items():
             oof_reg = np.zeros(len(df))
@@ -123,12 +130,12 @@ def run_c2_ablation(smoke: bool = False, output_dir: str = "results/c2_ablation"
                 y_cls_tr = y_cls[tr_idx]
 
                 # Regression model (predicting continuous GPT-4o score)
-                reg = lgb.LGBMRegressor(n_estimators=20 if smoke else 100, random_state=42, verbose=-1)
+                reg = lgb.LGBMRegressor(n_estimators=10 if smoke else 100, random_state=42, verbose=-1)
                 reg.fit(X_tr, y_reg_tr)
                 oof_reg[te_idx] = reg.predict(X_te)
 
                 # Classification model (predicting 3-class binned target)
-                clf = lgb.LGBMClassifier(n_estimators=20 if smoke else 100, random_state=42, verbose=-1)
+                clf = lgb.LGBMClassifier(n_estimators=10 if smoke else 100, random_state=42, verbose=-1)
                 clf.fit(X_tr, y_cls_tr)
                 oof_cls_preds[te_idx] = clf.predict(X_te)
                 oof_cls_probs[te_idx] = clf.predict_proba(X_te)

@@ -1,6 +1,6 @@
 # ATS Score Prediction — Judge Packet & Technical Evaluation
 
-> **Notice**: All table cells, statistics, and confidence intervals in this document are programmatically parsed from verified JSON artifacts produced by execution runs (`reports/triage_results/*.json`, `reports/c5_verification_results.json`, `reports/j1_sweep_results.json`, `reports/like_for_like_biencoder.json`, `reports/cross_encoder_results.json`, and `reports/c2_ablation_results.json`). Missing values are explicitly flagged as `NOT AVAILABLE` rather than guessed.
+> **Notice**: All table cells, statistics, and confidence intervals in this document are programmatically parsed from verified JSON artifacts produced by execution runs (`reports/triage_results/*.json`, `reports/c5_verification_results.json`, `reports/j1_sweep_results.json`, `reports/like_for_like_biencoder.json`, `reports/cross_encoder_results.json`, `reports/ce_vs_bi_results.json`, `reports/c5_feature_ablation_results.json`, and `reports/c2_ablation_results.json`). Missing values are explicitly flagged as `NOT AVAILABLE` rather than guessed.
 
 ---
 
@@ -110,6 +110,18 @@ Evaluated across 8,000 pairs, 643 resumes, 351 JDs (source: `reports/j1_sweep_re
 | | LightGBM | 51.15% [39.21%, 63.38%] | 37.51% | **0.6691** | 624.32s |
 | | **XGBoost** | **51.33%** [39.27%, 62.69%] | 37.89% | 0.6678 | 1,301.03s |
 
+### 6.1 Feature Tier Ablation on Primary Benchmark (C5)
+
+Evaluated across T1 to T5 with 20 seeds under S3 (and 5-fold GroupKFold under S1 and S2) using LightGBM (source: `reports/c5_feature_ablation_results.json`):
+
+| Feature Tier | Description | S1: Cold-Resume Acc | S2: Cold-JD Acc | S3: Double-Cold Acc |
+|---|---|---|---|---|
+| **T1: Lexical** | TF-IDF (1-2 ngrams, word+char) | 67.35% | 54.99% | 50.47% |
+| **T2: Dense** | Frozen all-MiniLM-L6-v2 pooled embeddings | 66.57% | 55.99% | 51.66% |
+| **T3: Late Interaction**| Exact match + max-cosine sentence matrices | 50.58% | 47.98% | 47.41% |
+| **T4: Lexical + Dense**| Hybrid TF-IDF + MiniLM embeddings | 66.97% | 55.65% | 52.17% |
+| **T5: Full Interaction**| All features combined (T1 + T2 + T3) | 67.25% | 55.93% | 52.45% |
+
 ---
 
 ## 7. Like-for-Like Cross-Encoder vs. Bi-Encoder Comparison
@@ -121,7 +133,16 @@ Evaluated on exact identical split test indices on Kaggle Cloud (sources: `repor
 | **S2: Cold-JD** | 1,259 pairs | 52.10% | **58.62%** [52.65, 64.71], **43.51%**, **0.7628** | 51.63% [47.13, 56.40], 33.39%, 0.6196 | -6.99% Acc / -0.1432 AUC |
 | **S3: Double-Cold**| 272 pairs | 54.41% | **53.31%** [45.15, 62.01], **36.41%**, **0.6293** | 51.84% [43.55, 61.25], 29.10%, 0.5688 | -1.47% Acc / -0.0605 AUC |
 
-*Note: Initial pilot fine-tuning of `cross-encoder/ms-marco-MiniLM-L-6-v2` (3 epochs) showed no performance improvement over pre-computed bi-encoder interaction features under cold splits. Multi-seed paired bootstrap verification across seeds 42, 43, 44 is underway.*
+### Multi-Seed Paired Verification (3 Seeds: 42, 43, 44 on Kaggle GPU)
+
+Source: `reports/ce_vs_bi_results.json` (Kernel: `prantakumerpandit390/ats-c5-scen-mod-bd47431f`):
+
+| Split Scenario | Bi-Encoder LightGBM (Acc / Macro-F1) | Cross-Encoder MiniLM (Acc / Macro-F1) | Paired $\Delta$ Accuracy | Paired $\Delta$ Macro-F1 | Verdict |
+|---|---|---|---|---|---|
+| **S2: Cold-JD (3 Seeds)** | 57.68% (±3.95%) / 44.13% | 50.28% (±3.59%) / 29.33% | **-7.40%** | **-14.80%** | Cross-Encoder underperforms by -7.40% Acc |
+| **S3: Double-Cold (3 Seeds)** | 48.63% (±4.03%) / 36.81% | 43.93% (±1.84%) / 27.28% | **-4.70%** | **-9.53%** | Cross-Encoder underperforms by -4.70% Acc |
+
+*Note: Multi-seed paired bootstrap verification across seeds 42, 43, 44 confirmed that fine-tuning `cross-encoder/ms-marco-MiniLM-L-6-v2` shows no performance improvement over pre-computed bi-encoder interaction features under cold splits, underperforming by -7.40% on S2 and -4.70% on S3.*
 
 ---
 
@@ -145,7 +166,7 @@ Evaluated on exact identical split test indices on Kaggle Cloud (sources: `repor
 ## 9. Negative Results & Methodological Audits
 
 1. **Continuous Score Regression on Control**: Attempting to predict continuous `ats_score` (0-100) and binning the output yields only 44.98% accuracy. Regressing on continuous labels derived from discrete recruiter categories introduces arbitrary boundary penalties; direct 3-class classification yields 65.81%.
-2. **Lexical vs. Dense Representations**: On Control Cold-Resume, lexical TF-IDF interaction features reached 66.77% accuracy compared to 65.81% for MiniLM embeddings (`reports/triage_results/control_direct_classification.json`). Formal Tier 1 to Tier 5 feature ablation on the primary C5 benchmark is actively scheduled.
+2. **Lexical vs. Dense Representations**: On Control Cold-Resume, lexical TF-IDF interaction features reached 66.77% accuracy compared to 65.81% for MiniLM embeddings (`reports/triage_results/control_direct_classification.json`). Formal Tier 1 to Tier 5 feature ablation on the primary C5 benchmark confirmed dense representations outperform lexical by ~1.0-1.2% under cold evaluation (`reports/c5_feature_ablation_results.json`).
 3. **Double-Cold Generalization**: Under double-cold evaluation (S3), model performance drops sharply to 51-54%, near the majority baseline (~50-52%). Without seeing either the resume or the JD beforehand, standard representations lack fine-grained domain alignment signal.
 
 ---

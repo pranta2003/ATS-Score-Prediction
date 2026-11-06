@@ -431,12 +431,14 @@ def run_c5_feature_ablation(smoke: bool = False, output_dir: str = "results/c5_f
     with open(res_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
-    rep_file = PROJECT_ROOT / "reports" / "c5_feature_ablation_results.json"
-    with open(rep_file, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2)
-
-    print(f"\n[OK] Results saved to {res_file} and {rep_file}")
-    render_markdown_report(results)
+    if not smoke:
+        rep_file = PROJECT_ROOT / "reports" / "c5_feature_ablation_results.json"
+        with open(rep_file, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2)
+        print(f"\n[OK] Results saved to {res_file} and {rep_file}")
+        render_markdown_report(results)
+    else:
+        print(f"\n[OK] Smoke test saved to {res_file}")
     return results
 
 
