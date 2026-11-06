@@ -127,6 +127,74 @@ def vectorized_cluster_bootstrap_acc_f1(
     return ci_acc, ci_f1
 
 
+def vectorized_paired_cluster_bootstrap_diff(
+    y_true: np.ndarray,
+    y_pred_a: np.ndarray,
+    y_pred_b: np.ndarray,
+    clusters: np.ndarray,
+    n_classes: int = 3,
+    n_boot: int = 500,
+    seed: int = 42,
+):
+    """
+    Vectorized paired cluster bootstrap for comparing Model A vs Model B.
+    Computes 95% CI on (Acc_A - Acc_B) and (Macro_F1_A - Macro_F1_B) on identical resamples.
+    """
+    unique_clusters, cluster_inv = np.unique(clusters, return_inverse=True)
+    K = len(unique_clusters)
+    if K < 5:
+        return (None, None), (None, None)
+
+    cluster_n = np.bincount(cluster_inv)
+    corr_a = (y_true == y_pred_a).astype(int)
+    corr_b = (y_true == y_pred_b).astype(int)
+    cluster_corr_a = np.bincount(cluster_inv, weights=corr_a)
+    cluster_corr_b = np.bincount(cluster_inv, weights=corr_b)
+
+    cluster_tp_a = np.zeros((K, n_classes))
+    cluster_fp_a = np.zeros((K, n_classes))
+    cluster_fn_a = np.zeros((K, n_classes))
+
+    cluster_tp_b = np.zeros((K, n_classes))
+    cluster_fp_b = np.zeros((K, n_classes))
+    cluster_fn_b = np.zeros((K, n_classes))
+
+    for c in range(n_classes):
+        cluster_tp_a[:, c] = np.bincount(cluster_inv, weights=((y_pred_a == c) & (y_true == c)).astype(int), minlength=K)
+        cluster_fp_a[:, c] = np.bincount(cluster_inv, weights=((y_pred_a == c) & (y_true != c)).astype(int), minlength=K)
+        cluster_fn_a[:, c] = np.bincount(cluster_inv, weights=((y_pred_a != c) & (y_true == c)).astype(int), minlength=K)
+
+        cluster_tp_b[:, c] = np.bincount(cluster_inv, weights=((y_pred_b == c) & (y_true == c)).astype(int), minlength=K)
+        cluster_fp_b[:, c] = np.bincount(cluster_inv, weights=((y_pred_b == c) & (y_true != c)).astype(int), minlength=K)
+        cluster_fn_b[:, c] = np.bincount(cluster_inv, weights=((y_pred_b != c) & (y_true == c)).astype(int), minlength=K)
+
+    rng = np.random.RandomState(seed)
+    boot_weights = rng.multinomial(n=K, pvals=np.full(K, 1.0 / K), size=n_boot)
+
+    boot_total = boot_weights @ cluster_n + 1e-9
+    boot_acc_a = (boot_weights @ cluster_corr_a) / boot_total
+    boot_acc_b = (boot_weights @ cluster_corr_b) / boot_total
+    diff_acc = boot_acc_a - boot_acc_b
+
+    # F1 A
+    tp_a = boot_weights @ cluster_tp_a
+    fp_a = boot_weights @ cluster_fp_a
+    fn_a = boot_weights @ cluster_fn_a
+    f1_a = np.mean((2 * tp_a) / (2 * tp_a + fp_a + fn_a + 1e-9), axis=1)
+
+    # F1 B
+    tp_b = boot_weights @ cluster_tp_b
+    fp_b = boot_weights @ cluster_fp_b
+    fn_b = boot_weights @ cluster_fn_b
+    f1_b = np.mean((2 * tp_b) / (2 * tp_b + fp_b + fn_b + 1e-9), axis=1)
+
+    diff_f1 = f1_a - f1_b
+
+    ci_diff_acc = (float(np.percentile(diff_acc, 2.5)), float(np.percentile(diff_acc, 97.5)))
+    ci_diff_f1 = (float(np.percentile(diff_f1, 2.5)), float(np.percentile(diff_f1, 97.5)))
+    return ci_diff_acc, ci_diff_f1
+
+
 def cluster_bootstrap_ci(df_oof: pd.DataFrame, cluster_col: str, metric_fn, n_boot: int = 500, seed: int = 42):
     """
     General cluster bootstrap confidence interval with fast vectorization fallback.
