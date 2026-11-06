@@ -65,6 +65,9 @@ with tarfile.open(fileobj=io.BytesIO(tar_data), mode="r:gz") as tar:
     tar.extractall(".")
 
 print("[OK] Unpacked src/ and scripts/ directories.")
+os.makedirs("reports", exist_ok=True)
+os.makedirs("results", exist_ok=True)
+os.makedirs("results/j1_sweep/incremental", exist_ok=True)
 
 # 2. Write config.yaml
 config_str = """{config_yaml_str}"""
@@ -206,7 +209,10 @@ def run_kaggle_job(config_path: str, device: str = "cpu", wait_seconds: int = 18
 
     # 1. Push kernel
     print(f"\n[1/3] Pushing kernel to Kaggle...")
-    push_res = subprocess.run(["kaggle", "kernels", "push", "-p", str(kernel_dir)], capture_output=True, text=True, shell=True)
+    kaggle_env = os.environ.copy()
+    kaggle_env["PYTHONIOENCODING"] = "utf-8"
+    kaggle_env["PYTHONUTF8"] = "1"
+    push_res = subprocess.run(["kaggle", "kernels", "push", "-p", str(kernel_dir)], capture_output=True, text=True, shell=True, env=kaggle_env)
     if push_res.returncode != 0:
         raise RuntimeError(f"Failed to push kernel:\n{push_res.stderr}\n{push_res.stdout}")
     print(push_res.stdout.strip())
@@ -216,7 +222,7 @@ def run_kaggle_job(config_path: str, device: str = "cpu", wait_seconds: int = 18
     status = ""
     while True:
         time.sleep(wait_seconds)
-        stat_res = subprocess.run(["kaggle", "kernels", "status", kernel_slug], capture_output=True, text=True, shell=True)
+        stat_res = subprocess.run(["kaggle", "kernels", "status", kernel_slug], capture_output=True, text=True, shell=True, env=kaggle_env)
         out = stat_res.stdout.strip()
         print(f"Status check: {out}")
         if "COMPLETE" in out:
@@ -230,14 +236,14 @@ def run_kaggle_job(config_path: str, device: str = "cpu", wait_seconds: int = 18
         # Pull logs to inspect failure
         fail_dir = PROJECT_ROOT / "results" / f"failed_{run_id}"
         fail_dir.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["kaggle", "kernels", "output", kernel_slug, "-p", str(fail_dir)], shell=True)
+        subprocess.run(["kaggle", "kernels", "output", kernel_slug, "-p", str(fail_dir)], shell=True, env=kaggle_env)
         raise RuntimeError(f"Kaggle kernel execution failed. Artifacts downloaded to {fail_dir}")
 
     # 3. Pull outputs to results/<run_id>/
     out_dir = PROJECT_ROOT / "results" / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"\n[3/3] Pulling kernel outputs to {out_dir}...")
-    dl_res = subprocess.run(["kaggle", "kernels", "output", kernel_slug, "-p", str(out_dir)], capture_output=True, text=True, shell=True)
+    dl_res = subprocess.run(["kaggle", "kernels", "output", kernel_slug, "-p", str(out_dir)], capture_output=True, text=True, shell=True, env=kaggle_env)
     print(dl_res.stdout.strip())
 
     # Validate output schema
