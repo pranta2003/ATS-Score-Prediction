@@ -1,0 +1,28 @@
+{
+  "project": "ATS-Score-Prediction-Legacy",
+  "source_notebook": "ats-score-prediction-project (1).ipynb",
+  "embedding_dimension": 384,
+  "concatenated_dimension": 768,
+  "cv_folds": 5,
+  "cv_r2": {
+    "linear_regression": 0.1233,
+    "knn": 0.2032,
+    "random_forest": 0.3390,
+    "xgboost": 0.3777,
+    "bagging_lr_knn": 0.2525
+  },
+  "final_test": {
+    "train_r2": 0.8670,
+    "test_r2": 0.3900,
+    "mae": 16.0956,
+    "rmse": 19.5251
+  },
+  "tuned_xgboost_cv_r2": 0.2808,
+  "hyperparameters": {
+    "subsample": 0.8,
+    "n_estimators": 100,
+    "max_depth": 4,
+    "learning_rate": 0.1,
+    "colsample_bytree": 1.0
+  }
+}
