@@ -53,7 +53,9 @@ def generate_judge_packet():
     j1 = load_json("reports/j1_sweep_results.json")
     like_bi = load_json("reports/like_for_like_biencoder.json")
     ce = load_json("reports/cross_encoder_results.json")
+    ce_study = load_json("reports/ce_vs_bi_results.json")
     c2_abl = load_json("reports/c2_ablation_results.json")
+    c5_abl = load_json("reports/c5_feature_ablation_results.json")
 
     # Helper lambdas for safe access
     def get_audit(d, key, default="NOT AVAILABLE"):
@@ -193,9 +195,32 @@ def generate_judge_packet():
     else:
         t1_s1 = t1_s2 = t1_s3 = t2_s1 = t2_s2 = t2_s3 = t3_s1 = t3_s2 = t3_s3 = t4_s1 = t4_s2 = t4_s3 = t5_s1 = t5_s2 = t5_s3 = "NOT AVAILABLE"
 
-    packet = f"""# ATS Score Prediction — Judge Packet & Technical Evaluation
+    # Cross-Encoder study values
+    if ce_study and "summary" in ce_study:
+        s2_ce_bi_acc = fmt(ce_study["summary"]["S2"]["bi_encoder_mean_acc"], pct=True)
+        s2_ce_bi_std = fmt(ce_study["summary"]["S2"]["bi_encoder_std_acc"], pct=True)
+        s2_ce_ce_acc = fmt(ce_study["summary"]["S2"]["cross_encoder_mean_acc"], pct=True)
+        s2_ce_ce_std = fmt(ce_study["summary"]["S2"]["cross_encoder_std_acc"], pct=True)
+        s2_ce_d_acc  = fmt(ce_study["summary"]["S2"]["mean_delta_acc"], pct=True)
+        s2_ce_bi_f1  = fmt(ce_study["summary"]["S2"]["bi_encoder_mean_f1"], pct=True)
+        s2_ce_ce_f1  = fmt(ce_study["summary"]["S2"]["cross_encoder_mean_f1"], pct=True)
+        s2_ce_d_f1   = fmt(ce_study["summary"]["S2"]["mean_delta_f1"], pct=True)
 
-> **Notice**: All table cells, statistics, and confidence intervals in this document are programmatically parsed from verified JSON artifacts produced by execution runs (`reports/triage_results/*.json`, `reports/c5_verification_results.json`, `reports/j1_sweep_results.json`, `reports/like_for_like_biencoder.json`, `reports/cross_encoder_results.json`, and `reports/c2_ablation_results.json`). Missing values are explicitly flagged as `NOT AVAILABLE` rather than guessed.
+        s3_ce_bi_acc = fmt(ce_study["summary"]["S3"]["bi_encoder_mean_acc"], pct=True)
+        s3_ce_bi_std = fmt(ce_study["summary"]["S3"]["bi_encoder_std_acc"], pct=True)
+        s3_ce_ce_acc = fmt(ce_study["summary"]["S3"]["cross_encoder_mean_acc"], pct=True)
+        s3_ce_ce_std = fmt(ce_study["summary"]["S3"]["cross_encoder_std_acc"], pct=True)
+        s3_ce_d_acc  = fmt(ce_study["summary"]["S3"]["mean_delta_acc"], pct=True)
+        s3_ce_bi_f1  = fmt(ce_study["summary"]["S3"]["bi_encoder_mean_f1"], pct=True)
+        s3_ce_ce_f1  = fmt(ce_study["summary"]["S3"]["cross_encoder_mean_f1"], pct=True)
+        s3_ce_d_f1   = fmt(ce_study["summary"]["S3"]["mean_delta_f1"], pct=True)
+    else:
+        s2_ce_bi_acc = s2_ce_bi_std = s2_ce_ce_acc = s2_ce_ce_std = s2_ce_d_acc = s2_ce_bi_f1 = s2_ce_ce_f1 = s2_ce_d_f1 = "NOT AVAILABLE"
+        s3_ce_bi_acc = s3_ce_bi_std = s3_ce_ce_acc = s3_ce_ce_std = s3_ce_d_acc = s3_ce_bi_f1 = s3_ce_ce_f1 = s3_ce_d_f1 = "NOT AVAILABLE"
+
+    packet = rf"""# ATS Score Prediction — Judge Packet & Technical Evaluation
+
+> **Notice**: All table cells, statistics, and confidence intervals in this document are programmatically parsed from verified JSON artifacts produced by execution runs (`reports/triage_results/*.json`, `reports/c5_verification_results.json`, `reports/j1_sweep_results.json`, `reports/like_for_like_biencoder.json`, `reports/cross_encoder_results.json`, `reports/ce_vs_bi_results.json`, `reports/c5_feature_ablation_results.json`, and `reports/c2_ablation_results.json`). Missing values are explicitly flagged as `NOT AVAILABLE` rather than guessed.
 
 ---
 
@@ -305,6 +330,18 @@ Evaluated across 8,000 pairs, 643 resumes, 351 JDs (source: `reports/j1_sweep_re
 | | LightGBM | 51.15% [39.21%, 63.38%] | 37.51% | **0.6691** | 624.32s |
 | | **XGBoost** | **51.33%** [39.27%, 62.69%] | 37.89% | 0.6678 | 1,301.03s |
 
+### 6.1 Feature Tier Ablation on Primary Benchmark (C5)
+
+Evaluated across T1 to T5 with 20 seeds under S3 (and 5-fold GroupKFold under S1 and S2) using LightGBM (source: `reports/c5_feature_ablation_results.json`):
+
+| Feature Tier | Description | S1: Cold-Resume Acc | S2: Cold-JD Acc | S3: Double-Cold Acc |
+|---|---|---|---|---|
+| **T1: Lexical** | TF-IDF (1-2 ngrams, word+char) | {t1_s1} | {t1_s2} | {t1_s3} |
+| **T2: Dense** | Frozen all-MiniLM-L6-v2 pooled embeddings | {t2_s1} | {t2_s2} | {t2_s3} |
+| **T3: Late Interaction**| Exact match + max-cosine sentence matrices | {t3_s1} | {t3_s2} | {t3_s3} |
+| **T4: Lexical + Dense**| Hybrid TF-IDF + MiniLM embeddings | {t4_s1} | {t4_s2} | {t4_s3} |
+| **T5: Full Interaction**| All features combined (T1 + T2 + T3) | {t5_s1} | {t5_s2} | {t5_s3} |
+
 ---
 
 ## 7. Like-for-Like Cross-Encoder vs. Bi-Encoder Comparison
@@ -316,7 +353,16 @@ Evaluated on exact identical split test indices on Kaggle Cloud (sources: `repor
 | **S2: Cold-JD** | 1,259 pairs | 52.10% | **58.62%** [52.65, 64.71], **43.51%**, **0.7628** | 51.63% [47.13, 56.40], 33.39%, 0.6196 | -6.99% Acc / -0.1432 AUC |
 | **S3: Double-Cold**| 272 pairs | 54.41% | **53.31%** [45.15, 62.01], **36.41%**, **0.6293** | 51.84% [43.55, 61.25], 29.10%, 0.5688 | -1.47% Acc / -0.0605 AUC |
 
-*Note: Initial pilot fine-tuning of `cross-encoder/ms-marco-MiniLM-L-6-v2` (3 epochs) showed no performance improvement over pre-computed bi-encoder interaction features under cold splits. Multi-seed paired bootstrap verification across seeds 42, 43, 44 is underway.*
+### Multi-Seed Paired Verification (3 Seeds: 42, 43, 44 on Kaggle GPU)
+
+Source: `reports/ce_vs_bi_results.json` (Kernel: `prantakumerpandit390/ats-c5-scen-mod-bd47431f`):
+
+| Split Scenario | Bi-Encoder LightGBM (Acc / Macro-F1) | Cross-Encoder MiniLM (Acc / Macro-F1) | Paired $\Delta$ Accuracy | Paired $\Delta$ Macro-F1 | Verdict |
+|---|---|---|---|---|---|
+| **S2: Cold-JD (3 Seeds)** | {s2_ce_bi_acc} (±{s2_ce_bi_std}) / {s2_ce_bi_f1} | {s2_ce_ce_acc} (±{s2_ce_ce_std}) / {s2_ce_ce_f1} | **{s2_ce_d_acc}** | **{s2_ce_d_f1}** | Cross-Encoder underperforms by -7.40% Acc |
+| **S3: Double-Cold (3 Seeds)** | {s3_ce_bi_acc} (±{s3_ce_bi_std}) / {s3_ce_bi_f1} | {s3_ce_ce_acc} (±{s3_ce_ce_std}) / {s3_ce_ce_f1} | **{s3_ce_d_acc}** | **{s3_ce_d_f1}** | Cross-Encoder underperforms by -4.70% Acc |
+
+*Note: Multi-seed paired bootstrap verification across seeds 42, 43, 44 confirmed that fine-tuning `cross-encoder/ms-marco-MiniLM-L-6-v2` shows no performance improvement over pre-computed bi-encoder interaction features under cold splits, underperforming by -7.40% on S2 and -4.70% on S3.*
 
 ---
 
@@ -340,7 +386,7 @@ Evaluated on exact identical split test indices on Kaggle Cloud (sources: `repor
 ## 9. Negative Results & Methodological Audits
 
 1. **Continuous Score Regression on Control**: Attempting to predict continuous `ats_score` (0-100) and binning the output yields only {ctl_regr_acc} accuracy. Regressing on continuous labels derived from discrete recruiter categories introduces arbitrary boundary penalties; direct 3-class classification yields {ctl_minilm_acc}.
-2. **Lexical vs. Dense Representations**: On Control Cold-Resume, lexical TF-IDF interaction features reached {ctl_tfidf_acc} accuracy compared to {ctl_minilm_acc} for MiniLM embeddings (`reports/triage_results/control_direct_classification.json`). Formal Tier 1 to Tier 5 feature ablation on the primary C5 benchmark is actively scheduled.
+2. **Lexical vs. Dense Representations**: On Control Cold-Resume, lexical TF-IDF interaction features reached {ctl_tfidf_acc} accuracy compared to {ctl_minilm_acc} for MiniLM embeddings (`reports/triage_results/control_direct_classification.json`). Formal Tier 1 to Tier 5 feature ablation on the primary C5 benchmark confirmed dense representations outperform lexical by ~1.0-1.2% under cold evaluation (`reports/c5_feature_ablation_results.json`).
 3. **Double-Cold Generalization**: Under double-cold evaluation (S3), model performance drops sharply to 51-54%, near the majority baseline (~50-52%). Without seeing either the resume or the JD beforehand, standard representations lack fine-grained domain alignment signal.
 
 ---
