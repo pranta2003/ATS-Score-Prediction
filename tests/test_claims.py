@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 import pytest
 import sys
@@ -11,6 +12,7 @@ from scripts.render_report_tables import (
     render_c2_ablation_table,
     render_like_for_like_table,
 )
+from scripts.make_judge_packet import generate_judge_packet
 
 
 def test_governance_files_in_harness():
@@ -123,3 +125,82 @@ def test_like_for_like_split_fidelity():
     # S3
     assert like_data["S3"]["test_size"] == 272
     assert abs(like_data["S3"]["majority"]["accuracy"] - 0.5441) < 1e-4
+
+
+def test_judge_packet_deterministic_generation():
+    """Validates that make_judge_packet.py regenerates reports/JUDGE_PACKET.md without discrepancies."""
+    packet_path = Path("reports/JUDGE_PACKET.md")
+    assert packet_path.exists(), "reports/JUDGE_PACKET.md must exist"
+    old_content = packet_path.read_text(encoding="utf-8")
+    
+    # Run generator
+    generate_judge_packet()
+    new_content = packet_path.read_text(encoding="utf-8")
+    assert old_content == new_content, "JUDGE_PACKET.md in working tree does not match generated output"
+
+
+def test_judge_packet_numbers_match_json_artifacts():
+    """Asserts that all quantitative numbers in JUDGE_PACKET.md match source JSON files."""
+    packet_text = Path("reports/JUDGE_PACKET.md").read_text(encoding="utf-8")
+
+    # Load artifacts
+    c1 = json.load(open("reports/triage_results/c1.json", encoding="utf-8"))
+    c2 = json.load(open("reports/triage_results/c2.json", encoding="utf-8"))
+    c3 = json.load(open("reports/triage_results/c3.json", encoding="utf-8"))
+    c4 = json.load(open("reports/triage_results/c4.json", encoding="utf-8"))
+    c5 = json.load(open("reports/triage_results/c5.json", encoding="utf-8"))
+    ctl = json.load(open("reports/triage_results/control.json", encoding="utf-8"))
+    c5_v = json.load(open("reports/c5_verification_results.json", encoding="utf-8"))
+
+    # Assert triage cardinalities are exact
+    assert str(c1["audit"]["rows"]) in packet_text
+    assert str(c1["audit"]["entities"]["unique_resumes"]) in packet_text
+    assert str(c1["audit"]["entities"]["unique_jds"]) in packet_text
+
+    assert str(c2["audit"]["rows"]) in packet_text
+    assert str(c2["audit"]["entities"]["unique_resumes"]) in packet_text
+    assert str(c2["audit"]["entities"]["unique_jds"]) in packet_text
+
+    assert str(c3["audit"]["rows"]) in packet_text
+    assert str(c3["audit"]["entities"]["unique_resumes"]) in packet_text
+    assert str(c3["audit"]["entities"]["unique_jds"]) in packet_text
+
+    assert str(c4["audit"]["rows"]) in packet_text
+    assert str(c4["audit"]["entities"]["unique_resumes"]) in packet_text
+    assert str(c4["audit"]["entities"]["unique_jds"]) in packet_text
+
+    assert str(c5["audit"]["rows"]) in packet_text
+    assert str(c5["audit"]["entities"]["unique_resumes"]) in packet_text
+    assert str(c5["audit"]["entities"]["unique_jds"]) in packet_text
+
+    assert str(ctl["audit"]["rows"]) in packet_text
+    assert str(ctl["audit"]["entities"]["unique_resumes"]) in packet_text
+    assert str(ctl["audit"]["entities"]["unique_jds"]) in packet_text
+
+    # Assert S1, S2, S3 verification values
+    s1 = c5_v["scenarios"]["S1_cold_resume"]
+    s2 = c5_v["scenarios"]["S2_cold_jd"]
+    s3 = c5_v["scenarios"]["S3_double_cold"]
+
+    assert f"{s1['accuracy']*100:.2f}%" in packet_text
+    assert f"{s1['macro_f1']*100:.2f}%" in packet_text
+    assert f"{s1['macro_roc_auc']:.4f}" in packet_text
+    assert f"{s1['binary_good_vs_nofit_auc']:.4f}" in packet_text
+
+    assert f"{s2['accuracy']*100:.2f}%" in packet_text
+    assert f"{s2['macro_f1']*100:.2f}%" in packet_text
+    assert f"{s2['macro_roc_auc']:.4f}" in packet_text
+    assert f"{s2['binary_good_vs_nofit_auc']:.4f}" in packet_text
+
+    assert f"{s3['accuracy']*100:.2f}%" in packet_text
+    assert f"{s3['macro_f1']*100:.2f}%" in packet_text
+    assert f"{s3['macro_roc_auc']:.4f}" in packet_text
+    assert f"{s3['binary_good_vs_nofit_auc']:.4f}" in packet_text
+
+
+def test_no_unsupported_phrases_in_judge_packet():
+    """Asserts that unsupported or misleading phrases have been removed."""
+    packet_text = Path("reports/JUDGE_PACKET.md").read_text(encoding="utf-8")
+    assert "true empirical ceiling" not in packet_text, "Phrase 'true empirical ceiling' must be removed"
+    assert "execute cross-encoder" not in packet_text.lower(), "Stale roadmap item 'execute cross-encoder' must be updated"
+    assert "completely unsupported" not in packet_text, "Phrase 'completely unsupported' must be qualified"
