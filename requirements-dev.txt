@@ -1,0 +1,10 @@
+-r requirements.txt
+pytest
+anyio
+platformdirs
+kaggle
+huggingface_hub
+datasets
+lightgbm
+psutil
+scipy

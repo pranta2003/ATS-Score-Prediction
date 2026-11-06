@@ -1,0 +1,13 @@
+-r requirements.txt
+torch
+transformers
+sentence-transformers
+lightgbm
+xgboost
+scikit-learn
+pandas
+numpy
+scipy
+kaggle
+huggingface_hub
+datasets
