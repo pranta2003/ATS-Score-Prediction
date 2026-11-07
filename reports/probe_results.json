@@ -1,0 +1,55 @@
+{
+  "python_version": "3.13.16",
+  "os": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "cpu_count": 4,
+  "ram_total_gb": 31.35,
+  "ram_available_gb": 30.29,
+  "gpu": {
+    "available": true,
+    "device_count": 2,
+    "device_name": "Tesla T4",
+    "cuda_version": "13.0"
+  },
+  "internet": {
+    "pypi": {
+      "reachable": true,
+      "code": 200
+    },
+    "huggingface": {
+      "reachable": true,
+      "code": 200
+    },
+    "google": {
+      "reachable": true,
+      "code": 200
+    }
+  },
+  "packages": {
+    "torch": "2.11.0+cu130",
+    "transformers": "5.20.2",
+    "sentence_transformers": "5.7.0",
+    "lightgbm": "4.6.0",
+    "xgboost": "3.4.1",
+    "sklearn": "1.6.1",
+    "scipy": "1.16.3",
+    "numpy": "2.1.3",
+    "pandas": "2.3.3",
+    "optuna": "5.0.0",
+    "datasets": "4.8.5",
+    "accelerate": "1.15.0"
+  },
+  "kaggle_env_keys": [
+    "KAGGLE_DATA_PROXY_TOKEN",
+    "KAGGLE_URL_BASE",
+    "KAGGLE_DOCKER_IMAGE",
+    "KAGGLE_KERNEL_INTEGRATIONS",
+    "KAGGLE_DATA_PROXY_PROJECT",
+    "KAGGLE_USER_SECRETS_TOKEN",
+    "KAGGLE_KERNEL_RUN_TYPE",
+    "KAGGLE_GCP_ZONE",
+    "KAGGLE_CONTAINER_NAME",
+    "KAGGLE_API_V1_TOKEN",
+    "KAGGLE_GRPC_DATA_PROXY_URL",
+    "KAGGLE_DATA_PROXY_URL"
+  ]
+}
