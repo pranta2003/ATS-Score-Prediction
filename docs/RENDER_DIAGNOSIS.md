@@ -31,6 +31,9 @@ xgb_model = joblib.load("ats_xgboost_model.pkl")
 interface.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)))
 ```
 
+In the upgraded production deployment, the legacy XGBoost regression model has been replaced with the validated 3-class LightGBM classifier (`models/c5_lightgbm_final.joblib`) with temperature scaling calibration.
+
+
 On Render's Free Web Service tier (0.1 vCPU shared, CPU throttle active):
 - Loading PyTorch, instantiating `SentenceTransformer`, and initializing model tensors takes **38 to 60+ seconds** of CPU time.
 - Render's health checker probes the container's bound port (`$PORT`) within a 30–60 second window after container launch.
