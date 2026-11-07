@@ -71,7 +71,10 @@ def generate_judge_packet():
     def get_prov(d, default="NOT AVAILABLE"):
         if not d or "provenance" not in d:
             return default
-        return d["provenance"].get("provenance", default)
+        prov = d["provenance"].get("provenance", default)
+        if prov == "HUMAN-LABELED":
+            return "undocumented (no dataset card; assumed human-labeled)"
+        return prov
 
     # Triage values
     c1_pairs = get_audit(c1, "rows")
