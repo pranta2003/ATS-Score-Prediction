@@ -204,3 +204,21 @@ def test_no_unsupported_phrases_in_judge_packet():
     assert "true empirical ceiling" not in packet_text, "Phrase 'true empirical ceiling' must be removed"
     assert "execute cross-encoder" not in packet_text.lower(), "Stale roadmap item 'execute cross-encoder' must be updated"
     assert "completely unsupported" not in packet_text, "Phrase 'completely unsupported' must be qualified"
+
+
+def test_reconciliation_table_and_provenance_in_packet():
+    """Asserts that Judge Packet contains the Unified Reconciliation Table, Cell Provenance, and audited metrics."""
+    packet_text = Path("reports/JUDGE_PACKET.md").read_text(encoding="utf-8")
+    assert "Unified Protocol & Metric Reconciliation Table" in packet_text
+    assert "Appendix: Cell Provenance Mapping" in packet_text
+    
+    # Assert Random Forest was never in J1 sweep and does not appear in J1 section
+    j1_section = packet_text[packet_text.find("## 6. Multi-Model Benchmark"):packet_text.find("### 6.1 Feature Tier Ablation")]
+    assert "Random Forest" not in j1_section, "Random Forest must not appear in J1 sweep table"
+    
+    # Assert reconciled metrics
+    assert "0.7648" in packet_text, "Fold mean S2 binary AUC must be reported"
+    assert "0.7767" in packet_text, "Global OOF S2 binary AUC must be reported"
+    assert "1,259" in packet_text, "Seed 42 S2 test size must be reported"
+    assert "13.0" in packet_text, "Probed CUDA 13.0 must be documented"
+
