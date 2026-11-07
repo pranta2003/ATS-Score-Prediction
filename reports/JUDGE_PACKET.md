@@ -66,8 +66,8 @@ To protect developer workstation constraints (4-thread Intel i5, 8 GB RAM, no GP
 | **C2** | `netsol/resume-score-details` | 1020 | 236 | 89 | Section rubric scores (continuous & 3-class) | LLM-DERIVED | Secondary benchmark (Exploratory; 26 valid JDs) |
 | **C3** | `rahulrajpu676/job-resume-matching` | 2500 | 2138 | 560 | Categorical | FORMULA-DERIVED | REJECT (Formulaic keyword heuristics) |
 | **C4** | `surendra365/recruitment-dataset` | 2500 | 2500 | 51 | Binary | FORMULA-DERIVED | REJECT (Rule-based generator; 51 JDs) |
-| **C5** | `cnamuangtoun/resume-job-description-fit` | 8000 | 643 | 351 | 3-Class Categorical | HUMAN-LABELED | **PRIMARY BENCHMARK** |
-| **Control**| `0xnbk/resume-ats-score-v1-en` | 6374 | 682 | 320 | Continuous score + discrete class | HUMAN-LABELED | Historical comparison baseline |
+| **C5** | `cnamuangtoun/resume-job-description-fit` | 8000 | 643 | 351 | 3-Class Categorical | undocumented (no dataset card; assumed human-labeled) | **PRIMARY BENCHMARK** |
+| **Control**| `0xnbk/resume-ats-score-v1-en` | 6374 | 682 | 320 | Continuous score + discrete class | undocumented (no dataset card; assumed human-labeled) | Historical comparison baseline |
 
 ---
 
