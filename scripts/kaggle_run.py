@@ -120,8 +120,14 @@ def prepare_kernel_bundle(
     if username is None:
         username = get_kaggle_username()
 
-    clean_slug = f"ats-{run_id.replace('_', '-')}"[:45].lower()
-    clean_title = clean_slug.replace("-", " ").title()
+    # Stable slug format: ats-c5-<purpose>-<cpu|gpu>
+    # Derive purpose from config name or purpose field
+    cfg_name = Path(config_path).stem.replace("_", "-")
+    # Clean purpose name
+    purpose = config_dict.get("purpose", cfg_name).replace("_", "-")
+    dev_str = "gpu" if device.lower() == "gpu" else "cpu"
+    clean_slug = f"ats-c5-{purpose}-{dev_str}"[:50].lower()
+    clean_title = f"ATS-Score | C5 | {purpose.replace('-', ' ').title()} | {dev_str.upper()}"[:60]
 
     if output_dir is None:
         output_dir = PROJECT_ROOT / ".kaggle_kernels" / f"run_{run_id}"
