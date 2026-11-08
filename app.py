@@ -5,6 +5,12 @@ import json
 import numpy as np
 from scipy.special import softmax
 import gradio as gr
+from src.ats.rubric import (
+    evaluate_formatting,
+    extract_keywords,
+    extract_years_experience,
+    extract_degree_level,
+)
 
 # ==========================================
 # Background model loader
@@ -119,8 +125,8 @@ def predict_ats(resume: str, job_description: str):
     # Raw model probabilities [P(No Fit), P(Potential Fit), P(Good Fit)]
     raw_probs = lgb_model.predict_proba(features)[0]
 
-    # Temperature scaling calibration (T=1.19 pre-calibrated on C5 OOF)
-    temp = float(model_meta.get("calibration", {}).get("serving_default_temperature", 1.19))
+    # Temperature scaling calibration (T=1.91 pre-calibrated on C5 S2 Cold-JD OOF)
+    temp = float(model_meta.get("calibration", {}).get("serving_default_temperature", 1.91))
     eps = 1e-7
     clipped_probs = np.clip(raw_probs, eps, 1.0 - eps)
     logits = np.log(clipped_probs)
@@ -140,6 +146,25 @@ def predict_ats(resume: str, job_description: str):
     # Weights: Good Fit = 1.0, Potential Fit = 0.5, No Fit = 0.0
     composite_fit_index = round(100.0 * (p_good * 1.0 + p_potential * 0.5), 1)
 
+    # Candidate Coverage Checklist (Strictly non-scoring audit)
+    fmt_audit = evaluate_formatting(r_text)
+    res_kw = extract_keywords(r_text)
+    jd_kw = extract_keywords(j_text)
+    matched_kw = res_kw.intersection(jd_kw)
+    missing_kw = sorted(list(jd_kw - res_kw))
+    res_exp = extract_years_experience(r_text)
+    jd_req_exp = extract_years_experience(j_text)
+    res_edu = extract_degree_level(r_text)
+    jd_edu = extract_degree_level(j_text)
+
+    deg_names = {0: "Not specified", 1: "Associate/Diploma", 2: "Bachelor's", 3: "Master's/MBA", 4: "PhD/Doctorate"}
+    res_edu_str = deg_names.get(res_edu, "Not specified")
+    jd_edu_str = deg_names.get(jd_edu, "Not specified")
+
+    kw_pct = (len(matched_kw) / max(1, len(jd_kw))) * 100.0
+    exp_status = "Meets requirement" if res_exp >= jd_req_exp else f"Below requirement ({res_exp:.0f} vs {jd_req_exp:.0f} yrs)"
+    missing_str = ", ".join(f"`{k}`" for k in missing_kw[:6]) if missing_kw else "None (Comprehensive coverage)"
+
     warn_block = f"\n\n> ⚠️ **Alerts**: {' | '.join(warnings)}" if warnings else ""
 
     markdown_report = (
@@ -153,6 +178,12 @@ def predict_ats(resume: str, job_description: str):
         f"| **Potential Fit** | **{p_potential * 100:.1f}%** | {raw_probs[1] * 100:.1f}% |\n"
         f"| **No Fit** | **{p_no_fit * 100:.1f}%** | {raw_probs[0] * 100:.1f}% |\n"
         f"{warn_block}\n\n"
+        f"#### Candidate Coverage Checklist (Non-Scoring Hygiene & Match Audit)\n"
+        f"- **Formatting Hygiene:** Email: {'✅ Detected' if fmt_audit['has_email'] else '❌ Missing'} | Phone: {'✅ Detected' if fmt_audit['has_phone'] else '❌ Missing'} | Word Count: `{fmt_audit['word_count']} words`\n"
+        f"- **Years of Experience:** Resume: `{res_exp:.0f} yrs` | JD Required: `{jd_req_exp:.0f} yrs` ({exp_status})\n"
+        f"- **Education Level:** Resume: `{res_edu_str}` | JD Requested: `{jd_edu_str}`\n"
+        f"- **Keyword Coverage:** `{len(matched_kw)} / {len(jd_kw)} terms matched` ({kw_pct:.1f}%)\n"
+        f"- **Top Missing Key Terms:** {missing_str}\n\n"
         f"---\n"
         f"*Methodological Note: Evaluated using LightGBM with 1,537-d MiniLM-L6 interaction features and temperature scaling ($T = {temp:.2f}$). "
         f"On unseen job descriptions (cold evaluation), the expected empirical accuracy ceiling is ~52–56%; scores should inform, not replace, recruiter judgment.*"

@@ -33,7 +33,7 @@
     "method": "Temperature Scaling",
     "optimal_temperature_s1": 1.190887197178116,
     "optimal_temperature_s2": 1.9112864744826241,
-    "serving_default_temperature": 1.19,
+    "serving_default_temperature": 1.91,
     "s1_ece_uncalibrated": 0.049640057999640705,
     "s1_ece_calibrated": 0.01853006503731012,
     "s2_ece_uncalibrated": 0.13330182798579332,
