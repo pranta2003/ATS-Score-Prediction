@@ -353,11 +353,13 @@ def main():
     # Part 4: Within-JD Ranking (NDCG@5 and AUC)
     # -----------------------------------------------------------------
     print("\n--- Step 2d: Evaluating Within-JD Ranking ---", flush=True)
-    def evaluate_within_jd_ranking(probs, scenario_name):
+    def evaluate_within_jd_ranking(probs, prior_probs, scenario_name):
         eligible_jds = []
         aucs_model = []
+        aucs_prior = []
         aucs_random = []
         ndcgs_model = []
+        ndcgs_prior = []
         ndcgs_random = []
         candidate_counts = []
 
@@ -376,34 +378,75 @@ def main():
                 mask = (y_grp != 1)
                 y_bin_grp = (y_grp[mask] == 2).astype(int)
                 score_model = probs[idx[mask], 2]
+                score_prior = prior_probs[idx[mask], 2]
                 score_rand = rng.rand(len(score_model))
 
                 if len(np.unique(y_bin_grp)) == 2:
                     aucs_model.append(roc_auc_score(y_bin_grp, score_model))
+                    if len(np.unique(score_prior)) > 1:
+                        aucs_prior.append(roc_auc_score(y_bin_grp, score_prior))
+                    else:
+                        aucs_prior.append(0.5)
                     aucs_random.append(roc_auc_score(y_bin_grp, score_rand))
 
                 rel_true = np.array([2 if yi == 2 else (1 if yi == 1 else 0) for yi in y_grp])
-                pred_scores = probs[idx, 2]
-                rand_scores = rng.rand(len(idx))
-
-                ndcg_m = ndcg_score([rel_true], [pred_scores], k=min(5, len(idx)))
-                ndcg_r = ndcg_score([rel_true], [rand_scores], k=min(5, len(idx)))
+                k = min(5, len(idx))
+                ndcg_m = ndcg_score([rel_true], [probs[idx, 2]], k=k)
+                ndcg_p = ndcg_score([rel_true], [prior_probs[idx, 2]], k=k)
+                ndcg_r = ndcg_score([rel_true], [rng.rand(len(idx))], k=k)
                 ndcgs_model.append(ndcg_m)
+                ndcgs_prior.append(ndcg_p)
                 ndcgs_random.append(ndcg_r)
+
+        M = len(eligible_jds)
+        def boot_ci_mean(arr):
+            b_means = [np.mean(rng.choice(arr, size=M, replace=True)) for _ in range(1000)]
+            return [round(float(np.percentile(b_means, 2.5)), 4), round(float(np.percentile(b_means, 97.5)), 4)]
 
         return {
             "num_eligible_jds": len(eligible_jds),
             "avg_candidates_per_jd": round(float(np.mean(candidate_counts)), 1),
-            "model_p_good_auc_mean": round(float(np.mean(aucs_model)), 4),
-            "model_p_good_auc_ci95": [round(float(np.percentile(aucs_model, 2.5)), 4), round(float(np.percentile(aucs_model, 97.5)), 4)],
-            "random_auc_mean": 0.5000,
-            "model_ndcg_at_5_mean": round(float(np.mean(ndcgs_model)), 4),
-            "model_ndcg_at_5_ci95": [round(float(np.percentile(ndcgs_model, 2.5)), 4), round(float(np.percentile(ndcgs_model, 97.5)), 4)],
-            "random_ndcg_at_5_mean": round(float(np.mean(ndcgs_random)), 4),
+            "protocol_note": "Single model per JD" if scenario_name == "S2" else "Candidates originate from different fold models; indicative only",
+            "model_p_good_auc": {
+                "mean": round(float(np.mean(aucs_model)), 4),
+                "ci95_of_mean": boot_ci_mean(aucs_model),
+                "median": round(float(np.median(aucs_model)), 4),
+                "iqr": [round(float(np.percentile(aucs_model, 25)), 4), round(float(np.percentile(aucs_model, 75)), 4)],
+            },
+            "prior_auc": {
+                "mean": round(float(np.mean(aucs_prior)), 4),
+                "ci95_of_mean": boot_ci_mean(aucs_prior),
+                "median": round(float(np.median(aucs_prior)), 4),
+                "iqr": [round(float(np.percentile(aucs_prior, 25)), 4), round(float(np.percentile(aucs_prior, 75)), 4)],
+            },
+            "random_auc": {
+                "mean": round(float(np.mean(aucs_random)), 4),
+                "ci95_of_mean": boot_ci_mean(aucs_random),
+                "median": round(float(np.median(aucs_random)), 4),
+                "iqr": [round(float(np.percentile(aucs_random, 25)), 4), round(float(np.percentile(aucs_random, 75)), 4)],
+            },
+            "model_ndcg_at_5": {
+                "mean": round(float(np.mean(ndcgs_model)), 4),
+                "ci95_of_mean": boot_ci_mean(ndcgs_model),
+                "median": round(float(np.median(ndcgs_model)), 4),
+                "iqr": [round(float(np.percentile(ndcgs_model, 25)), 4), round(float(np.percentile(ndcgs_model, 75)), 4)],
+            },
+            "prior_ndcg_at_5": {
+                "mean": round(float(np.mean(ndcgs_prior)), 4),
+                "ci95_of_mean": boot_ci_mean(ndcgs_prior),
+                "median": round(float(np.median(ndcgs_prior)), 4),
+                "iqr": [round(float(np.percentile(ndcgs_prior, 25)), 4), round(float(np.percentile(ndcgs_prior, 75)), 4)],
+            },
+            "random_ndcg_at_5": {
+                "mean": round(float(np.mean(ndcgs_random)), 4),
+                "ci95_of_mean": boot_ci_mean(ndcgs_random),
+                "median": round(float(np.median(ndcgs_random)), 4),
+                "iqr": [round(float(np.percentile(ndcgs_random, 25)), 4), round(float(np.percentile(ndcgs_random, 75)), 4)],
+            },
         }
 
-    s1_ranking = evaluate_within_jd_ranking(s1_oof_probs, "S1")
-    s2_ranking = evaluate_within_jd_ranking(s2_oof_probs, "S2")
+    s1_ranking = evaluate_within_jd_ranking(s1_oof_probs, s1_jd_prior_probs, "S1")
+    s2_ranking = evaluate_within_jd_ranking(s2_oof_probs, s2_resume_prior_probs, "S2")
 
     # -----------------------------------------------------------------
     # Part 5: Calibration & Temperature Scaling
@@ -577,16 +620,23 @@ Evaluating binary separation between **Good Fit** (relevance 2) and **No Fit** (
 
 ## 4. Within-Job Description Ranking Performance
 
-Evaluated exclusively on JDs with $\\ge 5$ candidates containing at least one Good Fit and at least one No Fit:
+Evaluated on eligible JDs ($\ge 5$ candidates containing at least one Good Fit and at least one No Fit, total 137 eligible JDs). Primary evaluation is **S2 (Cold JD)** where a single fold model scores all candidates for a held-out JD. In **S1 (Cold Resume)**, candidates originate from different fold models, so S1 metrics are strictly indicative.
 
-| Metric | Scenario S1 (Cold Resume) | Scenario S2 (Cold JD) |
-| :--- | :---: | :---: |
-| **Eligible Job Descriptions** | {rnk['S1_cold_resume']['num_eligible_jds']} JDs | {rnk['S2_cold_jd']['num_eligible_jds']} JDs |
-| **Average Candidates / JD** | {rnk['S1_cold_resume']['avg_candidates_per_jd']:.1f} candidates | {rnk['S2_cold_jd']['avg_candidates_per_jd']:.1f} candidates |
-| **Model P(Good Fit) AUC** | **{rnk['S1_cold_resume']['model_p_good_auc_mean']:.4f}** [{rnk['S1_cold_resume']['model_p_good_auc_ci95'][0]:.4f}, {rnk['S1_cold_resume']['model_p_good_auc_ci95'][1]:.4f}] | **{rnk['S2_cold_jd']['model_p_good_auc_mean']:.4f}** [{rnk['S2_cold_jd']['model_p_good_auc_ci95'][0]:.4f}, {rnk['S2_cold_jd']['model_p_good_auc_ci95'][1]:.4f}] |
-| **Random Baseline AUC** | 0.5000 | 0.5000 |
-| **Model NDCG@5** | **{rnk['S1_cold_resume']['model_ndcg_at_5_mean']:.4f}** [{rnk['S1_cold_resume']['model_ndcg_at_5_ci95'][0]:.4f}, {rnk['S1_cold_resume']['model_ndcg_at_5_ci95'][1]:.4f}] | **{rnk['S2_cold_jd']['model_ndcg_at_5_mean']:.4f}** [{rnk['S2_cold_jd']['model_ndcg_at_5_ci95'][0]:.4f}, {rnk['S2_cold_jd']['model_ndcg_at_5_ci95'][1]:.4f}] |
-| **Random Baseline NDCG@5** | {rnk['S1_cold_resume']['random_ndcg_at_5_mean']:.4f} | {rnk['S2_cold_jd']['random_ndcg_at_5_mean']:.4f} |
+### Primary Benchmark: S2 (Cold JD) — Single Model Per JD
+| Metric | Model $P(\\text{{Good Fit}})$ | Resume-Prior Baseline | Random Baseline |
+| :--- | :---: | :---: | :---: |
+| **Mean AUC (95% CI of Mean)** | **{rnk['S2_cold_jd']['model_p_good_auc']['mean']:.4f}** [{rnk['S2_cold_jd']['model_p_good_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['model_p_good_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['prior_auc']['mean']:.4f} [{rnk['S2_cold_jd']['prior_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['prior_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['random_auc']['mean']:.4f} [{rnk['S2_cold_jd']['random_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['random_auc']['ci95_of_mean'][1]:.4f}] |
+| **Median AUC (IQR [Q25, Q75])** | **{rnk['S2_cold_jd']['model_p_good_auc']['median']:.4f}** [{rnk['S2_cold_jd']['model_p_good_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['model_p_good_auc']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['prior_auc']['median']:.4f} [{rnk['S2_cold_jd']['prior_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['prior_auc']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['random_auc']['median']:.4f} [{rnk['S2_cold_jd']['random_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['random_auc']['iqr'][1]:.4f}] |
+| **Mean NDCG@5 (95% CI of Mean)** | **{rnk['S2_cold_jd']['model_ndcg_at_5']['mean']:.4f}** [{rnk['S2_cold_jd']['model_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['model_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['prior_ndcg_at_5']['mean']:.4f} [{rnk['S2_cold_jd']['prior_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['prior_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['random_ndcg_at_5']['mean']:.4f} [{rnk['S2_cold_jd']['random_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['random_ndcg_at_5']['ci95_of_mean'][1]:.4f}] |
+| **Median NDCG@5 (IQR [Q25, Q75])** | **{rnk['S2_cold_jd']['model_ndcg_at_5']['median']:.4f}** [{rnk['S2_cold_jd']['model_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['model_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['prior_ndcg_at_5']['median']:.4f} [{rnk['S2_cold_jd']['prior_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['prior_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['random_ndcg_at_5']['median']:.4f} [{rnk['S2_cold_jd']['random_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['random_ndcg_at_5']['iqr'][1]:.4f}] |
+
+### Indicative Benchmark: S1 (Cold Resume) — Multi-Model Aggregation
+| Metric | Model $P(\\text{{Good Fit}})$ | JD-Prior Baseline | Random Baseline |
+| :--- | :---: | :---: | :---: |
+| **Mean AUC (95% CI of Mean)** | **{rnk['S1_cold_resume']['model_p_good_auc']['mean']:.4f}** [{rnk['S1_cold_resume']['model_p_good_auc']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['model_p_good_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['prior_auc']['mean']:.4f} [{rnk['S1_cold_resume']['prior_auc']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['prior_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['random_auc']['mean']:.4f} [{rnk['S1_cold_resume']['random_auc']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['random_auc']['ci95_of_mean'][1]:.4f}] |
+| **Median AUC (IQR [Q25, Q75])** | **{rnk['S1_cold_resume']['model_p_good_auc']['median']:.4f}** [{rnk['S1_cold_resume']['model_p_good_auc']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['model_p_good_auc']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['prior_auc']['median']:.4f} [{rnk['S1_cold_resume']['prior_auc']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['prior_auc']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['random_auc']['median']:.4f} [{rnk['S1_cold_resume']['random_auc']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['random_auc']['iqr'][1]:.4f}] |
+| **Mean NDCG@5 (95% CI of Mean)** | **{rnk['S1_cold_resume']['model_ndcg_at_5']['mean']:.4f}** [{rnk['S1_cold_resume']['model_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['model_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['prior_ndcg_at_5']['mean']:.4f} [{rnk['S1_cold_resume']['prior_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['prior_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['random_ndcg_at_5']['mean']:.4f} [{rnk['S1_cold_resume']['random_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['random_ndcg_at_5']['ci95_of_mean'][1]:.4f}] |
+| **Median NDCG@5 (IQR [Q25, Q75])** | **{rnk['S1_cold_resume']['model_ndcg_at_5']['median']:.4f}** [{rnk['S1_cold_resume']['model_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['model_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['prior_ndcg_at_5']['median']:.4f} [{rnk['S1_cold_resume']['prior_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['prior_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['random_ndcg_at_5']['median']:.4f} [{rnk['S1_cold_resume']['random_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['random_ndcg_at_5']['iqr'][1]:.4f}] |
 
 ---
 
@@ -617,6 +667,11 @@ Evaluated exclusively on JDs with $\\ge 5$ candidates containing at least one Go
     with open(rep_path, "w", encoding="utf-8") as f:
         f.write(md)
     print(f"[OK] Report rendered to {rep_path}", flush=True)
+
+    docs_path = PROJECT_ROOT / "docs" / "MISSING_STATISTICS.md"
+    with open(docs_path, "w", encoding="utf-8") as f:
+        f.write(md)
+    print(f"[OK] Report rendered to {docs_path}", flush=True)
 
 
 if __name__ == "__main__":

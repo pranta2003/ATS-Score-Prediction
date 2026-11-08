@@ -9,13 +9,13 @@
 
 ## 1. Abstract
 
-Automated Applicant Tracking Systems (ATS) increasingly employ pre-trained language models to rank candidate resumes against job descriptions (JDs). Prior literature and open-source benchmarks routinely report regression fits of $R^2 \approx 0.40$ or classification accuracies approaching 90% without examining whether models learn genuine alignment semantics or exploit task-irrelevant base rates. In this work, we conduct an exhaustive forensic audit of standard ATS benchmarks (`0xnbk/resume-ats-score-v1-en`, `cnamuangtoun/resume-job-description-fit`, and candidate corpus variants) spanning 8,000 resume-job pairs. 
+Automated Applicant Tracking Systems (ATS) increasingly employ pre-trained language models to rank candidate resumes against job descriptions (JDs). Prior benchmarks frequently report regression fits of $R^2 \approx 0.40$ [CITATION NEEDED] or high classification accuracies on un-grouped splits without examining whether models learn genuine alignment semantics or exploit task-irrelevant base rates. In this work, we conduct an audit of standard ATS benchmarks (`0xnbk/resume-ats-score-v1-en`, `cnamuangtoun/resume-job-description-fit`, and candidate corpus variants) spanning 8,000 resume-job pairs. 
 
 We reveal four structural pathologies:
-1. **Data Leakage and Split Corruption**: Random cross-validation leaks identical resumes and job descriptions across splits, inflating accuracy by up to 18 percentage points over cold evaluation.
+1. **Data Leakage and Split Corruption**: Random cross-validation leaks identical resumes and job descriptions across splits, inflating apparent accuracy by a measured **7.00 percentage points** over cold-resume evaluation (73.16% vs 66.16%) and by **16.96 percentage points** over cold-JD evaluation (73.16% vs 56.20%) on identical features and models.
 2. **Artificial Target Artifacts**: Arbitrary continuous scores mapped across discrete recruiter labels introduce boundary noise that collapses regression $R^2$ to 0.29–0.43, whereas direct multi-class classification achieves 65.7% accuracy.
 3. **The Generalization Cliff**: Under rigorous cold-entity protocols, performance drops monotonically from **66.03%** (S1: Cold Resume) to **55.45%** (S2: Cold JD) and **51.15%–51.66%** (S3: Double-Cold) against a ~49–52% majority baseline.
-4. **Bi-Encoder Dominance under Length Constraints**: In real-world recruitment pairs where 99.58% exceed standard sequence boundaries (mean length 1,677 tokens), bi-encoders with chunk-level representations statistically significantly outperform 512-token cross-encoders ($\Delta \text{AUC} = +0.1716$, CI strictly excludes zero).
+4. **Bi-Encoder Dominance under Length Constraints**: In real-world recruitment pairs where 99.58% exceed standard sequence boundaries (mean length 1,677 tokens), bi-encoders with chunk-level representations outperform 512-token cross-encoders under this setup ($\Delta \text{AUC} = +0.1716$, paired CI strictly excludes zero; restricted to MiniLM-L6 at 512 tokens).
 
 We provide an open-source reproduction suite, an interpretable decoupled rubric baseline, and temperature-calibrated serving guidelines.
 
@@ -51,6 +51,7 @@ We provide an open-source reproduction suite, an interpretable decoupled rubric 
 - Remote Kaggle Execution Framework: Zero-drift execution scripts, caching architecture, and artifact checksum verification.
 
 ### Section 4: Results & Empirical Findings
+- **Like-for-Like Leakage Quantification**: Direct comparison of identical T2 Dense + LightGBM models showing random splitting inflates accuracy by **+7.00 pp** [5.48, 8.58 pp] vs S1 and **+16.96 pp** [14.58, 19.44 pp] vs S2, with Macro-F1 inflated by **+25.05 pp** [21.72, 28.41 pp] over S2 (`reports/LEAKAGE_COMPARISON.md`).
 - **Generalization Hierarchy**: Fig 1 presentation demonstrating the drop from S1 (66.03%) to S2 (55.45%) and S3 (51.15%–51.66%).
 - **Feature Tier Ablation**: Fig 2 presentation comparing T1 (Lexical), T2 (Dense), T3 (Late Interaction), T4 (Lex+Dense), and T5 (Full), confirming T2 Dense is the most parsimonious foundation.
 - **Cross-Encoder vs Bi-Encoder Study**: Token truncation analysis (Fig 4) explaining why MiniLM-L6 at 512 tokens fails against bi-encoder late interaction.
@@ -60,10 +61,10 @@ We provide an open-source reproduction suite, an interpretable decoupled rubric 
 - Why black-box neural scores fail recruiter explainability standards.
 - Architecture of the deterministic rubric engine: keyword match with diminishing returns, regex experience extraction, degree hierarchy, and seniority scoring.
 - Independent Formatting Audit: Decoupling formatting hygiene from candidate qualification match score.
-- Empirical Rubric Findings: Surface keyword overlap alone yields Spearman $r \approx -0.017$ and binary AUC $0.481$, confirming dense semantic interaction is necessary for recruiter alignment.
+- Empirical Rubric Findings: Surface keyword overlap alone yields Spearman $r \approx -0.017$ and binary AUC $0.481$, confirming that keyword matching alone does not track recruiter preferences on this benchmark.
 
 ### Section 6: Discussion & Production Deployment
-- Mitigating demographic bias: name/pronoun perturbation invariance testing.
+- A small name/pronoun perturbation sanity check on 2 resumes (not a fairness audit), with 0 change in predictions.
 - Low-memory deployment: Port-first startup and background loading to prevent cloud container port scan timeouts.
 - Memory optimization: Comparing PyTorch serving (522 MB Peak RSS) with ONNX Runtime (243 MB Peak RSS).
 
@@ -77,7 +78,7 @@ We provide an open-source reproduction suite, an interpretable decoupled rubric 
 
 2. **Dataset Provenance & Recruiter Subjectivity**:
    - The primary dataset C5 lacks detailed annotation guidelines and demographic metadata on annotators.
-   - Ground-truth labels reflect inherent recruiter disagreement and subjectivity, which industry literature estimates at 25% to 35% inter-annotator disagreement. Models approaching human consistency on this task cannot achieve 90% multi-class accuracy without overfitting to noise.
+   - Ground-truth labels reflect inherent recruiter disagreement and subjectivity [CITATION NEEDED]. Models approaching human consistency on this task cannot achieve high multi-class accuracy without overfitting to noise.
 
 3. **Single Pretrained Embedding Backbone**:
    - All dense feature evaluations were grounded on `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions) to maintain strict workstation and free-tier serving feasibility.

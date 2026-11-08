@@ -58,6 +58,7 @@ def generate_judge_packet():
     c5_abl = load_json("reports/c5_feature_ablation_results.json")
     missing_stats = load_json("results/missing_statistics.json")
     probe = load_json("reports/probe_results.json")
+    leak_data = load_json("results/leakage_comparison_results.json")
 
     # Helper lambdas for safe access
     def get_audit(d, key, default="NOT AVAILABLE"):
@@ -248,6 +249,38 @@ def generate_judge_packet():
     rec_s2_t2_auc = fmt(t_tiers.get("T2_Dense", {}).get("S2_cold_jd", {}).get("macro_roc_auc"), decimals=4)
     rec_s2_oof_auc = fmt(missing_stats.get("binary_auc", {}).get("S2_cold_jd", {}).get("best_model_auc"), decimals=4) if missing_stats else "NOT AVAILABLE"
 
+    # Like-for-like leakage values
+    rand_acc = fmt(leak_data.get("random_stratified", {}).get("accuracy"), pct=True) if leak_data else "NOT AVAILABLE"
+    rand_acc_ci = fmt_ci(leak_data.get("random_stratified", {}).get("accuracy_ci95"), pct=True) if leak_data else ""
+    rand_f1 = fmt(leak_data.get("random_stratified", {}).get("macro_f1"), pct=True) if leak_data else "NOT AVAILABLE"
+    rand_f1_ci = fmt_ci(leak_data.get("random_stratified", {}).get("macro_f1_ci95"), pct=True) if leak_data else ""
+    rand_auc = fmt(leak_data.get("random_stratified", {}).get("macro_roc_auc"), decimals=4) if leak_data else "NOT AVAILABLE"
+
+    leak_s1_acc = fmt(leak_data.get("s1_cold_resume", {}).get("accuracy"), pct=True) if leak_data else "NOT AVAILABLE"
+    leak_s1_acc_ci = fmt_ci(leak_data.get("s1_cold_resume", {}).get("accuracy_ci95"), pct=True) if leak_data else ""
+    leak_s1_f1 = fmt(leak_data.get("s1_cold_resume", {}).get("macro_f1"), pct=True) if leak_data else "NOT AVAILABLE"
+    leak_s1_f1_ci = fmt_ci(leak_data.get("s1_cold_resume", {}).get("macro_f1_ci95"), pct=True) if leak_data else ""
+    leak_s1_auc = fmt(leak_data.get("s1_cold_resume", {}).get("macro_roc_auc"), decimals=4) if leak_data else "NOT AVAILABLE"
+
+    leak_s2_acc = fmt(leak_data.get("s2_cold_jd", {}).get("accuracy"), pct=True) if leak_data else "NOT AVAILABLE"
+    leak_s2_acc_ci = fmt_ci(leak_data.get("s2_cold_jd", {}).get("accuracy_ci95"), pct=True) if leak_data else ""
+    leak_s2_f1 = fmt(leak_data.get("s2_cold_jd", {}).get("macro_f1"), pct=True) if leak_data else "NOT AVAILABLE"
+    leak_s2_f1_ci = fmt_ci(leak_data.get("s2_cold_jd", {}).get("macro_f1_ci95"), pct=True) if leak_data else ""
+    leak_s2_auc = fmt(leak_data.get("s2_cold_jd", {}).get("macro_roc_auc"), decimals=4) if leak_data else "NOT AVAILABLE"
+
+    gap_s1_acc = fmt(leak_data.get("leakage_gaps", {}).get("random_vs_s1_cold_resume", {}).get("delta_accuracy"), pct=True) if leak_data else "NOT AVAILABLE"
+    gap_s1_ci = fmt_ci(leak_data.get("leakage_gaps", {}).get("random_vs_s1_cold_resume", {}).get("delta_accuracy_ci95"), pct=True) if leak_data else ""
+    gap_s1_f1 = fmt(leak_data.get("leakage_gaps", {}).get("random_vs_s1_cold_resume", {}).get("delta_macro_f1"), pct=True) if leak_data else "NOT AVAILABLE"
+    gap_s1_f1_ci = fmt_ci(leak_data.get("leakage_gaps", {}).get("random_vs_s1_cold_resume", {}).get("delta_macro_f1_ci95"), pct=True) if leak_data else ""
+    gap_s1_auc = fmt(leak_data.get("leakage_gaps", {}).get("random_vs_s1_cold_resume", {}).get("delta_macro_auc"), decimals=4) if leak_data else "NOT AVAILABLE"
+
+    gap_s2_acc = fmt(leak_data.get("leakage_gaps", {}).get("random_vs_s2_cold_jd", {}).get("delta_accuracy"), pct=True) if leak_data else "NOT AVAILABLE"
+    gap_s2_ci = fmt_ci(leak_data.get("leakage_gaps", {}).get("random_vs_s2_cold_jd", {}).get("delta_accuracy_ci95"), pct=True) if leak_data else ""
+    gap_s2_f1 = fmt(leak_data.get("leakage_gaps", {}).get("random_vs_s2_cold_jd", {}).get("delta_macro_f1"), pct=True) if leak_data else "NOT AVAILABLE"
+    gap_s2_f1_ci = fmt_ci(leak_data.get("leakage_gaps", {}).get("random_vs_s2_cold_jd", {}).get("delta_macro_f1_ci95"), pct=True) if leak_data else ""
+    gap_s2_auc = fmt(leak_data.get("leakage_gaps", {}).get("random_vs_s2_cold_jd", {}).get("delta_macro_auc"), decimals=4) if leak_data else "NOT AVAILABLE"
+
+
     rec_s3_verif_acc = s3_acc
     rec_s3_verif_auc = s3_auc
     rec_s3_j1_acc = fmt(j1.get("S3_double_cold", {}).get("lightgbm", {}).get("accuracy"), pct=True) if j1 else "NOT AVAILABLE"
@@ -372,6 +405,21 @@ Metrics computed on C5 ({c5_pairs} pairs, {c5_res} resumes, {c5_jds} JDs) with *
 1. **A4 JD-Swap Sensitivity Test**: Swapping JDs at test time flipped **{a4_flip} of predictions** with an L1 probability shift of **{a4_shift}**, verifying that the MiniLM interaction features are genuinely sensitive to JD text content.
 2. **A6 HuggingFace Benchmark Leakage**: The official test split of C5 holds out 100% of JDs (0/71 seen in train) but contains **{a6_res_pct}% overlapping resumes ({a6_seen_res} / {a6_tot_res} seen in train)**. Thus, the official HuggingFace benchmark evaluates Cold-JD / Warm-Resume, explaining why published scores sit between S1 and S2.
 
+### 5.1 Like-for-Like Leakage Study (Random Pair vs Grouped Splits)
+Evaluated on C5 (8,000 pairs) comparing the exact same Tier 2 Dense + LightGBM architecture across split strategies (source: `results/leakage_comparison_results.json`):
+
+| Protocol | Split Grouping | Accuracy (95% CI) | Macro-F1 (95% CI) | Macro ROC-AUC |
+|---|---|---|---|---|
+| **Random Stratified** | None (Random pair split) | **{rand_acc}** {rand_acc_ci} | **{rand_f1}** {rand_f1_ci} | **{rand_auc}** |
+| **S1: Cold-Resume** | Grouped by `resume_id` (643 groups) | **{leak_s1_acc}** {leak_s1_acc_ci} | **{leak_s1_f1}** {leak_s1_f1_ci} | **{leak_s1_auc}** |
+| **S2: Cold-JD** | Grouped by `jd_id` (351 groups) | **{leak_s2_acc}** {leak_s2_acc_ci} | **{leak_s2_f1}** {leak_s2_f1_ci} | **{leak_s2_auc}** |
+
+| Measured Leakage Gap | $\Delta$ Accuracy (95% Paired CI) | $\Delta$ Macro-F1 (95% Paired CI) | $\Delta$ Macro-AUC |
+|---|---|---|---|
+| **Random vs S1 (Cold Resume)** | **+{gap_s1_acc}** {gap_s1_ci} | **+{gap_s1_f1}** {gap_s1_f1_ci} | **+{gap_s1_auc}** |
+| **Random vs S2 (Cold JD)** | **+{gap_s2_acc}** {gap_s2_ci} | **+{gap_s2_f1}** {gap_s2_f1_ci} | **+{gap_s2_auc}** |
+
+
 ---
 
 ## 6. Multi-Model Benchmark (J1 Sweep on C5)
@@ -430,7 +478,7 @@ To ensure zero ambiguity across different evaluation sweeps, the table below com
    - **1,259 pairs**: Exact held-out test fold in the single-split seed 42 cross-encoder study (`like_for_like_biencoder.json`).
    - **~1,571–1,600 pairs**: Typical test fold size in 5-fold GroupKFold across the 8,000 C5 dataset (`c5_verification_results.json`).
 5. **CUDA Version Probed**:
-   - Kaggle environment probe records `cuda_version: "13.0"` with PyTorch build `2.11.0+cu130` (`reports/probe_results.json`), operating on Tesla T4 nodes supporting CUDA 12.4 / 13.0 forward compatibility.
+   - Kaggle environment probe records 2x Tesla T4 GPUs with `cuda_version: "13.0"` and PyTorch build `2.11.0+cu130` (verbatim from `reports/probe_results.json`).
 
 ---
 
@@ -476,7 +524,7 @@ Source: `reports/ce_vs_bi_results.json` (Kernel: `prantakumerpandit390/ats-c5-sc
 ## 9. Negative Results & Methodological Audits
 
 1. **Continuous Score Regression on Control**: Attempting to predict continuous `ats_score` (0-100) and binning the output yields only {ctl_regr_acc} accuracy. Regressing on continuous labels derived from discrete recruiter categories introduces arbitrary boundary penalties; direct 3-class classification yields {ctl_minilm_acc}.
-2. **Lexical vs. Dense Representations**: On Control Cold-Resume, lexical TF-IDF interaction features reached {ctl_tfidf_acc} accuracy compared to {ctl_minilm_acc} for MiniLM embeddings (`reports/triage_results/control_direct_classification.json`). Formal Tier 1 to Tier 5 feature ablation on the primary C5 benchmark confirmed dense representations outperform lexical by ~1.0-1.2% under cold evaluation (`reports/c5_feature_ablation_results.json`).
+2. **Lexical vs. Dense Representations**: On Control Cold-Resume, lexical TF-IDF interaction features reached {ctl_tfidf_acc} accuracy compared to {ctl_minilm_acc} for MiniLM embeddings (`reports/triage_results/control_direct_classification.json`). Formal Tier 1 to Tier 5 feature ablation on the primary C5 benchmark and paired cluster-bootstrap confidence intervals (`results/missing_statistics.json`) confirm that no tier differs statistically significantly from T2 Dense (all 95% CIs for $\Delta\text{{Accuracy}}$ include zero: T1 vs T2 [-0.0100, +0.0224] on S1, [-0.0325, +0.0129] on S2, [-0.0613, +0.0536] on S3). T2 Dense is the most parsimonious foundation.
 3. **Double-Cold Generalization**: Under double-cold evaluation (S3), model performance drops sharply to 51-54%, near the majority baseline (~49-52%). Without seeing either the resume or the JD beforehand, standard representations lack fine-grained domain alignment signal.
 
 ---

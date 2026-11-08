@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-07T10:20:32Z",
+  "timestamp": "2026-11-08T17:14:38Z",
   "tier_comparisons_vs_t2": {
     "T1_Lexical_vs_T2_Dense": {
       "S1_cold_resume": {
@@ -148,34 +148,156 @@
     "S1_cold_resume": {
       "num_eligible_jds": 137,
       "avg_candidates_per_jd": 30.1,
-      "model_p_good_auc_mean": 0.6747,
-      "model_p_good_auc_ci95": [
-        0.27,
-        1.0
-      ],
-      "random_auc_mean": 0.5,
-      "model_ndcg_at_5_mean": 0.6855,
-      "model_ndcg_at_5_ci95": [
-        0.2168,
-        1.0
-      ],
-      "random_ndcg_at_5_mean": 0.5452
+      "protocol_note": "Candidates originate from different fold models; indicative only",
+      "model_p_good_auc": {
+        "mean": 0.6747,
+        "ci95_of_mean": [
+          0.6403,
+          0.7065
+        ],
+        "median": 0.6691,
+        "iqr": [
+          0.559,
+          0.8
+        ]
+      },
+      "prior_auc": {
+        "mean": 0.252,
+        "ci95_of_mean": [
+          0.228,
+          0.2748
+        ],
+        "median": 0.2897,
+        "iqr": [
+          0.125,
+          0.366
+        ]
+      },
+      "random_auc": {
+        "mean": 0.5185,
+        "ci95_of_mean": [
+          0.4875,
+          0.5496
+        ],
+        "median": 0.5115,
+        "iqr": [
+          0.4,
+          0.6115
+        ]
+      },
+      "model_ndcg_at_5": {
+        "mean": 0.6855,
+        "ci95_of_mean": [
+          0.6427,
+          0.723
+        ],
+        "median": 0.6844,
+        "iqr": [
+          0.5317,
+          0.8539
+        ]
+      },
+      "prior_ndcg_at_5": {
+        "mean": 0.3416,
+        "ci95_of_mean": [
+          0.3072,
+          0.3768
+        ],
+        "median": 0.3913,
+        "iqr": [
+          0.1751,
+          0.5
+        ]
+      },
+      "random_ndcg_at_5": {
+        "mean": 0.5452,
+        "ci95_of_mean": [
+          0.4989,
+          0.5868
+        ],
+        "median": 0.5531,
+        "iqr": [
+          0.3843,
+          0.7654
+        ]
+      }
     },
     "S2_cold_jd": {
       "num_eligible_jds": 137,
       "avg_candidates_per_jd": 30.1,
-      "model_p_good_auc_mean": 0.7524,
-      "model_p_good_auc_ci95": [
-        0.25,
-        1.0
-      ],
-      "random_auc_mean": 0.5,
-      "model_ndcg_at_5_mean": 0.7534,
-      "model_ndcg_at_5_ci95": [
-        0.1536,
-        1.0
-      ],
-      "random_ndcg_at_5_mean": 0.5452
+      "protocol_note": "Single model per JD",
+      "model_p_good_auc": {
+        "mean": 0.7524,
+        "ci95_of_mean": [
+          0.7162,
+          0.7902
+        ],
+        "median": 0.788,
+        "iqr": [
+          0.6667,
+          0.9093
+        ]
+      },
+      "prior_auc": {
+        "mean": 0.6637,
+        "ci95_of_mean": [
+          0.6262,
+          0.7017
+        ],
+        "median": 0.7222,
+        "iqr": [
+          0.5502,
+          0.8365
+        ]
+      },
+      "random_auc": {
+        "mean": 0.5185,
+        "ci95_of_mean": [
+          0.4875,
+          0.5496
+        ],
+        "median": 0.5115,
+        "iqr": [
+          0.4,
+          0.6115
+        ]
+      },
+      "model_ndcg_at_5": {
+        "mean": 0.7534,
+        "ci95_of_mean": [
+          0.7145,
+          0.7901
+        ],
+        "median": 0.8304,
+        "iqr": [
+          0.6309,
+          1.0
+        ]
+      },
+      "prior_ndcg_at_5": {
+        "mean": 0.6345,
+        "ci95_of_mean": [
+          0.5819,
+          0.6802
+        ],
+        "median": 0.6516,
+        "iqr": [
+          0.4307,
+          0.927
+        ]
+      },
+      "random_ndcg_at_5": {
+        "mean": 0.5452,
+        "ci95_of_mean": [
+          0.4989,
+          0.5868
+        ],
+        "median": 0.5531,
+        "iqr": [
+          0.3843,
+          0.7654
+        ]
+      }
     }
   },
   "calibration": {
