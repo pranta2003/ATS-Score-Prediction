@@ -15,6 +15,7 @@ from scripts.run_c5_feature_ablation import extract_t2_dense
 from app import extract_serving_features
 
 
+@pytest.mark.heavy
 def test_t2_feature_parity_50_pairs():
     adapter = get_adapter("c5")
     df = adapter.load()
