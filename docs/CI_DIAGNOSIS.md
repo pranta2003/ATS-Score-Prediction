@@ -18,10 +18,10 @@ This document catalogs and diagnoses workflow run failures in GitHub Actions acr
 | #24 | `docs/final-reconciliation` | PASS | 57s | `42340099413` |
 | #25 | `fix/kaggle-runs` | PASS | 1m 04s | `42368352279` |
 | #26 | `fix/packet-provenance` | PASS | 57s | `42368711788` |
-| #27 | `feat/app-final-model` | PENDING / RE-RUN | In Progress | `42478324834` |
+| #27 | `feat/app-final-model` | PASS | 1m 37s | `42479301096` |
 | #28 | `fix/rubric-validation` | PASS | 1m 05s | `42369831407` |
 | #29 | `docs/paper-outline-fix` | PASS | 1m 21s | `42475415783` |
-| #30 | `release/final-package` | PENDING / RE-RUN | In Progress | `42478336124` |
+| #30 | `release/final-package` | PASS | 1m 41s | `42478561190` |
 
 ---
 
@@ -87,6 +87,33 @@ build	Run fast unit tests	2026-11-08T12:03:00.2081674Z ##[error]Process complete
 #### Diagnostic Explanation
 Pytest imports all `test_*.py` files during the collection phase before filtering out tests marked with `@pytest.mark.heavy`. Test modules such as `test_adapters.py`, `test_feature_parity.py`, `test_kaggle_bridge.py`, and `test_t3_features.py` import `src.ats.adapters`, which imports `datasets` (`from datasets import load_dataset`) and `lightgbm`.
 Because `datasets` and `lightgbm` were omitted from `requirements-dev.txt`, the CI runner failed with `ModuleNotFoundError: No module named 'datasets'` at collection time.
+
+---
+
+### Incident 3: Workflow Run 42479011425 (PR #27)
+- **Pull Request:** #27 (`feat/app-final-model`)
+- **Workflow Name:** `Python application`
+- **Failing Job:** `build`
+- **Failing Step:** `Run fast unit tests`
+- **Run Duration:** 1m 25s
+- **Timestamp:** 2026-11-08T12:12:08Z
+- **Root Cause Classification:** `(ii) test needs data, network, Kaggle login, cache, or model file that CI lacks` (un-synchronized test fixtures and legacy paper outline on app branch)
+
+#### Last 15 Error Lines Verbatim
+```
+build	Run fast unit tests	2026-11-08T12:12:06.9940003Z =========================== short test summary info ============================
+build	Run fast unit tests	2026-11-08T12:12:06.9940814Z FAILED tests/test_claims.py::test_no_banned_phrases_in_outline_or_packet - AssertionError: Banned phrase 'inflating accuracy by up to 18 percentage points' found in docs/PAPER_OUTLINE.md
+build	Run fast unit tests	2026-11-08T12:12:06.9941630Z assert 'inflating a...ntage points' not in '# academic ... tokens. |\n'
+build	Run fast unit tests	2026-11-08T12:12:06.9987962Z FAILED tests/test_rubric_validation.py::test_rubric_validation_results_file - AssertionError: rubric_validation_results.json must exist
+build	Run fast unit tests	2026-11-08T12:12:06.9988709Z assert False
+build	Run fast unit tests	2026-11-08T12:12:06.9988922Z  +  where False = exists()
+build	Run fast unit tests	2026-11-08T12:12:06.9989482Z  +    where exists = PosixPath('/home/runner/work/ATS-Score-Prediction/ATS-Score-Prediction/reports/rubric_validation_results.json').exists
+build	Run fast unit tests	2026-11-08T12:12:07.4091259Z ============ 2 failed, 34 passed, 1 skipped, 13 deselected in 7.81s ============
+build	Run fast unit tests	2026-11-08T12:12:08.5248708Z ##[error]Process completed with exit code 1.
+```
+
+#### Diagnostic Explanation
+PR #27 branched before the consolidation commit on `release/final-package`. Consequently, `feat/app-final-model` retained an earlier draft of `docs/PAPER_OUTLINE.md` (which contained the unverified phrase flagged by `test_no_banned_phrases_in_outline_or_packet`) and lacked the audited `reports/rubric_validation_results.json` artifact required by `test_rubric_validation.py`. Synchronizing `release/final-package` into `feat/app-final-model` resolved all assertions, leading to a green run (ID `42479301096` in 1m 37s).
 
 ---
 
