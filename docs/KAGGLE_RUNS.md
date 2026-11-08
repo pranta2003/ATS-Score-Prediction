@@ -19,6 +19,7 @@
 | `prantakumerpandit390/ats-c5-scen-mod-9dd67db7` | J1 Architecture Sweep Re-run | CPU (4 vCPUs, 31.35 GB RAM) | Verified J1 benchmark sweep re-run with atomic checkpointing and manifest verification | `reports/j1_sweep_results.json` | **yes** | 2026-11-06 | COMPLETE |
 | `prantakumerpandit390/ats-c5-scen-lightgbm-068737a8` | C5 Feature Ablation Sweep | CPU (4 vCPUs, 31.35 GB RAM) | 5-tier dense feature ablation across S1, S2, S3 (20 seeds) with paired cluster bootstrap | `reports/c5_feature_ablation_results.json` | **yes** | 2026-11-06 | COMPLETE |
 | `prantakumerpandit390/ats-c5-scen-mod-bd47431f` | Cross-Encoder vs Bi-Encoder Study | GPU (2x NVIDIA Tesla T4, CUDA 13.0) | Multi-seed (42, 43, 44) matched split evaluation of Cross-Encoder vs Bi-Encoder on S2 & S3 | `reports/ce_vs_bi_results.json` | **yes** | 2026-11-06 | COMPLETE |
+| `prantakumerpandit390/ats-c5-leakage-comparison-cpu` | Ats C5 Leakage Comparison CPU | CPU (4 vCPUs, 31.35 GB RAM) | Like-for-like leakage comparison evaluating T2 Dense + LightGBM across Random Stratified, S1 Cold-Resume, and S2 Cold-JD (5 folds) | `results/leakage_comparison_results.json`, `reports/LEAKAGE_COMPARISON.md`, `results/c5_leakage_oof_predictions.parquet` | **yes** | 2026-11-08 | COMPLETE |
 
 *\* Note on `ats-c5-scen-mod-81b51c15`: Computation completed 100% of folds and seeds over 7,426 seconds, but raised `FileNotFoundError` on final write due to an uncreated output directory. It was formally re-run and verified by `ats-c5-scen-mod-9dd67db7`.*
 
@@ -37,6 +38,8 @@ Every output artifact checked into the repository has been verified against its 
 | `reports/cross_encoder_results.json` | `ats-c5-scen-mod-ec22929c` | 1,107 | `f5090f43a5537726d71ea526801db936e945294aad3e9da9e986bb2bd5b78f13` |
 | `reports/c5_feature_ablation_results.json` | `ats-c5-scen-lightgbm-068737a8` | 12,461 | `488ad07504f98686ac87d4a79f0e873b96f1c49bfb8c630d870456ce90b27cc3` |
 | `reports/ce_vs_bi_results.json` | `ats-c5-scen-mod-bd47431f` | 11,616 | `7c04f26c41cb497efb49d8b98032dba5fcbc21aa3e58ca12f12c48692f17c473` |
+| `results/leakage_comparison_results.json` | `ats-c5-leakage-comparison-cpu` | 1,732 | `db3104db9612577bf7f0a7a46e4d9915ee78d040e662f2eb4f1449bbcaeb38da` |
+| `results/c5_leakage_oof_predictions.parquet` | `ats-c5-leakage-comparison-cpu` | 524,343 | `110417bf3db8b0e9872abc925c7a0478deab3c0590f70d3182eaf9aac83380da` |
 
 ---
 
