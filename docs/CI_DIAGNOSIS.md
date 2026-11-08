@@ -18,16 +18,16 @@ This document catalogs and diagnoses workflow run failures in GitHub Actions acr
 | #24 | `docs/final-reconciliation` | PASS | 57s | `42340099413` |
 | #25 | `fix/kaggle-runs` | PASS | 1m 04s | `42368352279` |
 | #26 | `fix/packet-provenance` | PASS | 57s | `42368711788` |
-| #27 | `feat/app-final-model` | FAIL | 12s | `42476260925` |
+| #27 | `feat/app-final-model` | PENDING / RE-RUN | In Progress | `42478324834` |
 | #28 | `fix/rubric-validation` | PASS | 1m 05s | `42369831407` |
 | #29 | `docs/paper-outline-fix` | PASS | 1m 21s | `42475415783` |
-| #30 | `release/final-package` | PASS | 1m 10s | `42476398422` |
+| #30 | `release/final-package` | PENDING / RE-RUN | In Progress | `42478336124` |
 
 ---
 
 ## 2. Detailed Incident Log
 
-### Workflow Run 42476260925
+### Incident 1: Workflow Run 42476260925 (PR #27)
 - **Pull Request:** #27
 - **Branch:** `feat/app-final-model`
 - **Workflow Name:** `Python application`
@@ -56,11 +56,45 @@ When `pip install -r requirements.txt` executed on PR #27, it attempted to resol
 
 ---
 
+### Incident 2: Workflow Runs 42478324834 (PR #27) and 42478336124 (PR #30)
+- **Pull Request:** #27 (`feat/app-final-model`) and #30 (`release/final-package`)
+- **Workflow Name:** `Python application`
+- **Failing Job:** `build`
+- **Failing Step:** `Run fast unit tests`
+- **Run Duration:** 1m 11s (failed at test collection)
+- **Timestamp:** 2026-11-08T12:02:59Z
+- **Root Cause Classification:** `(ii) test needs data, network, Kaggle login, cache, or model file that CI lacks` (dev dependencies missing during test module collection)
+
+#### Last 15 Error Lines Verbatim
+```
+build	Run fast unit tests	2026-11-08T12:02:59.6224029Z scripts/run_experiment.py:24: in <module>
+build	Run fast unit tests	2026-11-08T12:02:59.6224244Z     from src.ats.adapters.registry import get_adapter
+build	Run fast unit tests	2026-11-08T12:02:59.6224460Z src/ats/adapters/__init__.py:2: in <module>
+build	Run fast unit tests	2026-11-08T12:02:59.6224651Z     from .control import ControlAdapter
+build	Run fast unit tests	2026-11-08T12:02:59.6224836Z src/ats/adapters/control.py:3: in <module>
+build	Run fast unit tests	2026-11-08T12:02:59.6225017Z     from datasets import load_dataset
+build	Run fast unit tests	2026-11-08T12:02:59.6225211Z E   ModuleNotFoundError: No module named 'datasets'
+build	Run fast unit tests	2026-11-08T12:02:59.6229426Z =========================== short test summary info ============================
+build	Run fast unit tests	2026-11-08T12:02:59.6229688Z ERROR tests/test_adapters.py
+build	Run fast unit tests	2026-11-08T12:02:59.6230006Z ERROR tests/test_feature_parity.py
+build	Run fast unit tests	2026-11-08T12:02:59.6230188Z ERROR tests/test_kaggle_bridge.py
+build	Run fast unit tests	2026-11-08T12:02:59.6230362Z ERROR tests/test_t3_features.py
+build	Run fast unit tests	2026-11-08T12:02:59.6230574Z !!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+build	Run fast unit tests	2026-11-08T12:02:59.6230835Z ============================== 4 errors in 3.55s ===============================
+build	Run fast unit tests	2026-11-08T12:03:00.2081674Z ##[error]Process completed with exit code 2.
+```
+
+#### Diagnostic Explanation
+Pytest imports all `test_*.py` files during the collection phase before filtering out tests marked with `@pytest.mark.heavy`. Test modules such as `test_adapters.py`, `test_feature_parity.py`, `test_kaggle_bridge.py`, and `test_t3_features.py` import `src.ats.adapters`, which imports `datasets` (`from datasets import load_dataset`) and `lightgbm`.
+Because `datasets` and `lightgbm` were omitted from `requirements-dev.txt`, the CI runner failed with `ModuleNotFoundError: No module named 'datasets'` at collection time.
+
+---
+
 ## 3. Remediation Architecture
 
-To align CI with production standards and prevent future failures, the following changes are implemented:
+To align CI with production standards and ensure green builds across all PRs:
 1. **Dynamic Python Versioning:** `.github/workflows/python-app.yml` references `.python-version` via `python-version-file: ".python-version"` (Python 3.13).
-2. **Dependency Management:** Pip dependency caching is enabled (`cache: "pip"`), and `requirements-dev.txt` is installed alongside `requirements.txt`.
+2. **Dependency Management:** Pip dependency caching is enabled (`cache: "pip"`), and `requirements-dev.txt` is installed alongside `requirements.txt`, specifying `pytest`, `flake8`, `datasets`, and `lightgbm`.
 3. **Execution Guardrails:** `timeout-minutes: 10` is added to prevent stalled jobs.
 4. **Flake8 Linting Filter:** Linting runs `flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics` so syntax and logic fatal errors fail the build without tripping on stylistic warnings.
 5. **Fast Test Suite Separation:** Tests requiring Hugging Face downloads, caches, Kaggle credentials, model files, or long execution are marked with `@pytest.mark.heavy`. CI automatically filters these via `pytest -m "not heavy"`.
