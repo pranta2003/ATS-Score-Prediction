@@ -2,6 +2,8 @@ import os
 import json
 import pytest
 from pathlib import Path
+
+pytest.importorskip("yaml")
 from scripts.kaggle_run import (
     prepare_kernel_bundle,
     validate_results_dir,

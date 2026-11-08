@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from datasets import load_dataset
 from .base import BaseDatasetAdapter, compute_sha1
 
 
@@ -11,6 +10,7 @@ class C1FitAdapter(BaseDatasetAdapter):
         super().__init__(name=repo_id)
 
     def load_raw(self) -> pd.DataFrame:
+        from datasets import load_dataset
         ds = load_dataset(self.name, split="train")
         return ds.to_pandas()
 

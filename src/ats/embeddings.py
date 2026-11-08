@@ -2,7 +2,6 @@ import os
 import re
 import numpy as np
 import pandas as pd
-from sentence_transformers import SentenceTransformer
 from .adapters.base import compute_sha1, normalize_text
 
 
@@ -106,6 +105,7 @@ def build_and_cache_document_embeddings(
     # If some documents are missing from doc cache, encode unique docs
     if len(doc_emb_map) < len(all_text_ids):
         if model is None:
+            from sentence_transformers import SentenceTransformer
             model = SentenceTransformer(model_name)
         missing_ids = all_text_ids - set(doc_emb_map.keys())
         missing_docs = unique_docs[unique_docs["text_id"].isin(missing_ids)].reset_index(drop=True)
@@ -131,6 +131,7 @@ def build_and_cache_document_embeddings(
                 return doc_emb_map, sent_emb_map
 
         if model is None:
+            from sentence_transformers import SentenceTransformer
             model = SentenceTransformer(model_name)
         all_sentences = []
         sent_meta_records = []
