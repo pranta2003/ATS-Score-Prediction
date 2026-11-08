@@ -45,16 +45,23 @@ Evaluating binary separation between **Good Fit** (relevance 2) and **No Fit** (
 
 ## 4. Within-Job Description Ranking Performance
 
-Evaluated exclusively on JDs with $\ge 5$ candidates containing at least one Good Fit and at least one No Fit:
+Evaluated on eligible JDs ($\ge 5$ candidates containing at least one Good Fit and at least one No Fit, total 137 eligible JDs). Primary evaluation is **S2 (Cold JD)** where a single fold model scores all candidates for a held-out JD. In **S1 (Cold Resume)**, candidates originate from different fold models, so S1 metrics are strictly indicative.
 
-| Metric | Scenario S1 (Cold Resume) | Scenario S2 (Cold JD) |
-| :--- | :---: | :---: |
-| **Eligible Job Descriptions** | 137 JDs | 137 JDs |
-| **Average Candidates / JD** | 30.1 candidates | 30.1 candidates |
-| **Model P(Good Fit) AUC** | **0.6747** [0.2700, 1.0000] | **0.7524** [0.2500, 1.0000] |
-| **Random Baseline AUC** | 0.5000 | 0.5000 |
-| **Model NDCG@5** | **0.6855** [0.2168, 1.0000] | **0.7534** [0.1536, 1.0000] |
-| **Random Baseline NDCG@5** | 0.5452 | 0.5452 |
+### Primary Benchmark: S2 (Cold JD) — Single Model Per JD
+| Metric | Model $P(\text{Good Fit})$ | Resume-Prior Baseline | Random Baseline |
+| :--- | :---: | :---: | :---: |
+| **Mean AUC (95% CI of Mean)** | **0.7524** [0.7162, 0.7902] | 0.6637 [0.6262, 0.7017] | 0.5185 [0.4875, 0.5496] |
+| **Median AUC (IQR [Q25, Q75])** | **0.7880** [0.6667, 0.9093] | 0.7222 [0.5502, 0.8365] | 0.5115 [0.4000, 0.6115] |
+| **Mean NDCG@5 (95% CI of Mean)** | **0.7534** [0.7145, 0.7901] | 0.6345 [0.5819, 0.6802] | 0.5452 [0.4989, 0.5868] |
+| **Median NDCG@5 (IQR [Q25, Q75])** | **0.8304** [0.6309, 1.0000] | 0.6516 [0.4307, 0.9270] | 0.5531 [0.3843, 0.7654] |
+
+### Indicative Benchmark: S1 (Cold Resume) — Multi-Model Aggregation
+| Metric | Model $P(\text{Good Fit})$ | JD-Prior Baseline | Random Baseline |
+| :--- | :---: | :---: | :---: |
+| **Mean AUC (95% CI of Mean)** | **0.6747** [0.6403, 0.7065] | 0.2520 [0.2280, 0.2748] | 0.5185 [0.4875, 0.5496] |
+| **Median AUC (IQR [Q25, Q75])** | **0.6691** [0.5590, 0.8000] | 0.2897 [0.1250, 0.3660] | 0.5115 [0.4000, 0.6115] |
+| **Mean NDCG@5 (95% CI of Mean)** | **0.6855** [0.6427, 0.7230] | 0.3416 [0.3072, 0.3768] | 0.5452 [0.4989, 0.5868] |
+| **Median NDCG@5 (IQR [Q25, Q75])** | **0.6844** [0.5317, 0.8539] | 0.3913 [0.1751, 0.5000] | 0.5531 [0.3843, 0.7654] |
 
 ---
 

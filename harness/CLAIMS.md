@@ -23,3 +23,15 @@ This document catalogs testable scientific and architectural claims established 
 
 ## 4. Compute Environment Claims
 - **Claim 4.1 (Remote Kaggle Specifications):** Remote compute probes verified Kaggle Cloud container specifications: 4 vCPUs, $\ge 30$ GB RAM, and dual NVIDIA Tesla T4 GPUs with unrestricted outbound internet connectivity.
+
+## 5. Architectural & Truncation Claims
+- **Claim 5.1 (Bi-Encoder vs Cross-Encoder Truncation Constraint):** On C5, 99.58% of pairs exceed 512 tokens. Under this setup (MiniLM-L6, 512 tokens), bi-encoder interaction features statistically significantly outperform the fine-tuned cross-encoder ($\Delta$ AUC = -0.1716 on S2, -0.1034 on S3, paired CIs exclude zero; `reports/ce_vs_bi_results.json`).
+
+## 6. Rubric & Calibration Claims
+- **Claim 6.1 (Decoupled Rubric & Keyword Cap):** The explainable rubric scorer decouples formatting hygiene from content fit. Its set-based keyword extraction guarantees that repeating an identical keyword produces 0 additional score increase (`tests/test_rubric_validation.py`).
+- **Claim 6.2 (Temperature Scaling Calibration):** Temperature scaling ($T=1.19$ on S1, $T=1.91$ on S2) reduces expected calibration error by $>60\%$ (S1: 0.0496 to 0.0188; S2: 0.1333 to 0.0357; `results/missing_statistics.json`).
+
+## 7. Like-for-Like Leakage Comparison Claims
+- **Claim 7.1 (Measured Random vs Grouped Leakage Gap):** Evaluating the exact same Tier 2 Dense + LightGBM model on C5 (8,000 pairs) under Random Stratified 5-Fold CV yields 73.16% accuracy [95% CI: 72.17%, 74.15%], compared to 66.16% [63.85%, 68.32%] under Cold-Resume (S1) and 56.20% [53.79%, 58.65%] under Cold-JD (S2). Random pair splitting inflates accuracy by a measured +7.00 percentage points [5.48, 8.58 pp] over S1, and by +16.96 percentage points [14.58, 19.44 pp] over S2 (`results/leakage_comparison_results.json`).
+
+

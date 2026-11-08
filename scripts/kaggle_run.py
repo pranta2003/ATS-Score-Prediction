@@ -14,7 +14,28 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.run_experiment import get_git_commit, compute_run_id
+def get_git_commit():
+    """Retrieve short commit hash."""
+    try:
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(PROJECT_ROOT),
+            stderr=subprocess.DEVNULL,
+        ).decode("utf-8").strip()
+        return commit
+    except Exception:
+        return "0000000"
+
+
+def compute_run_id(config_dict, commit):
+    """Generate run_id = hash of config + git commit."""
+    import hashlib
+    serialized = json.dumps(config_dict, sort_keys=True) + commit
+    h = hashlib.sha256(serialized.encode("utf-8")).hexdigest()[:8]
+    ds = config_dict.get("dataset", "dataset")
+    sc = config_dict.get("scenario", "scen")
+    md = config_dict.get("model", "mod")
+    return f"{ds}_{sc}_{md}_{h}"
 
 
 def get_kaggle_username():
@@ -25,13 +46,18 @@ def get_kaggle_username():
 def create_code_payload(root_dir: Path) -> str:
     """Package src/ and scripts/ directories into a base64 gzipped tar string."""
     buf = io.BytesIO()
+    def tar_filter(tarinfo):
+        if "__pycache__" in tarinfo.name or tarinfo.name.endswith(".pyc"):
+            return None
+        return tarinfo
+
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:
         src_dir = root_dir / "src"
         if src_dir.exists():
-            tar.add(str(src_dir), arcname="src")
+            tar.add(str(src_dir), arcname="src", filter=tar_filter)
         scripts_dir = root_dir / "scripts"
         if scripts_dir.exists():
-            tar.add(str(scripts_dir), arcname="scripts")
+            tar.add(str(scripts_dir), arcname="scripts", filter=tar_filter)
 
     buf.seek(0)
     return base64.b64encode(buf.read()).decode("utf-8")
@@ -127,7 +153,7 @@ def prepare_kernel_bundle(
     purpose = config_dict.get("purpose", cfg_name).replace("_", "-")
     dev_str = "gpu" if device.lower() == "gpu" else "cpu"
     clean_slug = f"ats-c5-{purpose}-{dev_str}"[:50].lower()
-    clean_title = f"ATS-Score | C5 | {purpose.replace('-', ' ').title()} | {dev_str.upper()}"[:60]
+    clean_title = f"Ats C5 {purpose.replace('-', ' ').title()} {dev_str.upper()}"[:60]
 
     if output_dir is None:
         output_dir = PROJECT_ROOT / ".kaggle_kernels" / f"run_{run_id}"
@@ -182,6 +208,16 @@ def validate_results_dir(target_dir: Path) -> dict:
         with open(ce_file, "r", encoding="utf-8") as f:
             return json.load(f)
 
+    leak_file = target_dir / "leakage_comparison_results.json"
+    if leak_file.exists():
+        with open(leak_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    llm_file = target_dir / "llm_judge_results.json"
+    if llm_file.exists():
+        with open(llm_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+
     metrics_file = target_dir / "metrics.json"
     if not metrics_file.exists():
         raise FileNotFoundError(f"Missing metrics.json / sweep / ablation file in {target_dir}")
@@ -204,17 +240,17 @@ def run_kaggle_job(config_path: str, device: str = "cpu", wait_seconds: int = 18
     kernel_slug = bundle["kernel_slug"]
     kernel_dir = bundle["kernel_dir"]
 
-    print(f"Prepared Kaggle Kernel Bundle:")
-    print(f"  Slug:    {kernel_slug}")
-    print(f"  Device:  {device.upper()}")
-    print(f"  Dir:     {kernel_dir}")
+    print(f"Prepared Kaggle Kernel Bundle:", flush=True)
+    print(f"  Slug:    {kernel_slug}", flush=True)
+    print(f"  Device:  {device.upper()}", flush=True)
+    print(f"  Dir:     {kernel_dir}", flush=True)
 
     if dry_run:
-        print("[DRY RUN] Bundle prepared successfully. Exiting without pushing.")
+        print("[DRY RUN] Bundle prepared successfully. Exiting without pushing.", flush=True)
         return bundle
 
     # 1. Push kernel
-    print(f"\n[1/3] Pushing kernel to Kaggle...")
+    print(f"\n[1/3] Pushing kernel to Kaggle...", flush=True)
     kaggle_env = os.environ.copy()
     kaggle_env["PYTHONIOENCODING"] = "utf-8"
     kaggle_env["PYTHONUTF8"] = "1"
@@ -229,16 +265,16 @@ def run_kaggle_job(config_path: str, device: str = "cpu", wait_seconds: int = 18
     push_res = subprocess.run(["kaggle", "kernels", "push", "-p", str(kernel_dir)], capture_output=True, text=True, shell=True, env=kaggle_env)
     if push_res.returncode != 0:
         raise RuntimeError(f"Failed to push kernel:\n{push_res.stderr}\n{push_res.stdout}")
-    print(push_res.stdout.strip())
+    print(push_res.stdout.strip(), flush=True)
 
     # 2. Wait following the waiting rule
-    print(f"\n[2/3] Waiting for Kaggle kernel to execute (checking every {wait_seconds}s)...")
+    print(f"\n[2/3] Waiting for Kaggle kernel to execute (checking every {wait_seconds}s)...", flush=True)
     status = ""
     while True:
         time.sleep(wait_seconds)
         stat_res = subprocess.run(["kaggle", "kernels", "status", kernel_slug], capture_output=True, text=True, shell=True, env=kaggle_env)
         out = stat_res.stdout.strip()
-        print(f"Status check: {out}")
+        print(f"Status check: {out}", flush=True)
         if "COMPLETE" in out:
             status = "COMPLETE"
             break

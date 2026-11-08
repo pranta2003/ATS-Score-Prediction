@@ -88,6 +88,21 @@ Metrics computed on C5 (8000 pairs, 643 resumes, 351 JDs) with **95% cluster-boo
 1. **A4 JD-Swap Sensitivity Test**: Swapping JDs at test time flipped **27.22% of predictions** with an L1 probability shift of **0.3917**, verifying that the MiniLM interaction features are genuinely sensitive to JD text content.
 2. **A6 HuggingFace Benchmark Leakage**: The official test split of C5 holds out 100% of JDs (0/71 seen in train) but contains **99.79% overlapping resumes (476 / 477 seen in train)**. Thus, the official HuggingFace benchmark evaluates Cold-JD / Warm-Resume, explaining why published scores sit between S1 and S2.
 
+### 5.1 Like-for-Like Leakage Study (Random Pair vs Grouped Splits)
+Evaluated on C5 (8,000 pairs) comparing the exact same Tier 2 Dense + LightGBM architecture across split strategies (source: `results/leakage_comparison_results.json`):
+
+| Protocol | Split Grouping | Accuracy (95% CI) | Macro-F1 (95% CI) | Macro ROC-AUC |
+|---|---|---|---|---|
+| **Random Stratified** | None (Random pair split) | **73.16%** [72.17%, 74.15%] | **70.75%** [69.69%, 71.82%] | **0.8781** |
+| **S1: Cold-Resume** | Grouped by `resume_id` (643 groups) | **66.16%** [63.85%, 68.32%] | **63.40%** [60.67%, 65.84%] | **0.8307** |
+| **S2: Cold-JD** | Grouped by `jd_id` (351 groups) | **56.20%** [53.79%, 58.65%] | **45.70%** [42.44%, 48.73%] | **0.7294** |
+
+| Measured Leakage Gap | $\Delta$ Accuracy (95% Paired CI) | $\Delta$ Macro-F1 (95% Paired CI) | $\Delta$ Macro-AUC |
+|---|---|---|---|
+| **Random vs S1 (Cold Resume)** | **+7.00%** [5.48%, 8.58%] | **+7.35%** [5.72%, 9.01%] | **+0.0474** |
+| **Random vs S2 (Cold JD)** | **+16.96%** [14.58%, 19.44%] | **+25.05%** [21.72%, 28.41%] | **+0.1487** |
+
+
 ---
 
 ## 6. Multi-Model Benchmark (J1 Sweep on C5)
@@ -163,7 +178,7 @@ To ensure zero ambiguity across different evaluation sweeps, the table below com
    - **1,259 pairs**: Exact held-out test fold in the single-split seed 42 cross-encoder study (`like_for_like_biencoder.json`).
    - **~1,571–1,600 pairs**: Typical test fold size in 5-fold GroupKFold across the 8,000 C5 dataset (`c5_verification_results.json`).
 5. **CUDA Version Probed**:
-   - Kaggle environment probe records `cuda_version: "13.0"` with PyTorch build `2.11.0+cu130` (`reports/probe_results.json`), operating on Tesla T4 nodes supporting CUDA 12.4 / 13.0 forward compatibility.
+   - Kaggle environment probe records 2x Tesla T4 GPUs with `cuda_version: "13.0"` and PyTorch build `2.11.0+cu130` (verbatim from `reports/probe_results.json`).
 
 ---
 
@@ -209,7 +224,7 @@ Source: `reports/ce_vs_bi_results.json` (Kernel: `prantakumerpandit390/ats-c5-sc
 ## 9. Negative Results & Methodological Audits
 
 1. **Continuous Score Regression on Control**: Attempting to predict continuous `ats_score` (0-100) and binning the output yields only 44.98% accuracy. Regressing on continuous labels derived from discrete recruiter categories introduces arbitrary boundary penalties; direct 3-class classification yields 65.81%.
-2. **Lexical vs. Dense Representations**: On Control Cold-Resume, lexical TF-IDF interaction features reached 66.77% accuracy compared to 65.81% for MiniLM embeddings (`reports/triage_results/control_direct_classification.json`). Formal Tier 1 to Tier 5 feature ablation on the primary C5 benchmark confirmed dense representations outperform lexical by ~1.0-1.2% under cold evaluation (`reports/c5_feature_ablation_results.json`).
+2. **Lexical vs. Dense Representations**: On Control Cold-Resume, lexical TF-IDF interaction features reached 66.77% accuracy compared to 65.81% for MiniLM embeddings (`reports/triage_results/control_direct_classification.json`). Formal Tier 1 to Tier 5 feature ablation on the primary C5 benchmark and paired cluster-bootstrap confidence intervals (`results/missing_statistics.json`) confirm that no tier differs statistically significantly from T2 Dense (all 95% CIs for $\Delta\text{Accuracy}$ include zero: T1 vs T2 [-0.0100, +0.0224] on S1, [-0.0325, +0.0129] on S2, [-0.0613, +0.0536] on S3). T2 Dense is the most parsimonious foundation.
 3. **Double-Cold Generalization**: Under double-cold evaluation (S3), model performance drops sharply to 51-54%, near the majority baseline (~49-52%). Without seeing either the resume or the JD beforehand, standard representations lack fine-grained domain alignment signal.
 
 ---

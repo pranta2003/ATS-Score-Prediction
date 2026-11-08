@@ -1,0 +1,6 @@
+dataset: "c5"
+purpose: "leakage-comparison"
+script: "scripts/run_leakage_comparison.py"
+model: "lightgbm"
+device: "cpu"
+description: "Like-for-like leakage comparison: T2 Dense + LightGBM on Random Stratified 5-fold vs S1 Cold Resume vs S2 Cold JD"
