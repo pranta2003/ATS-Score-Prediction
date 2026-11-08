@@ -31,9 +31,6 @@ xgb_model = joblib.load("ats_xgboost_model.pkl")
 interface.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)))
 ```
 
-In the upgraded production deployment, the legacy XGBoost regression model has been replaced with the validated 3-class LightGBM classifier (`models/c5_lightgbm_final.joblib`) with temperature scaling calibration.
-
-
 On Render's Free Web Service tier (0.1 vCPU shared, CPU throttle active):
 - Loading PyTorch, instantiating `SentenceTransformer`, and initializing model tensors takes **38 to 60+ seconds** of CPU time.
 - Render's health checker probes the container's bound port (`$PORT`) within a 30–60 second window after container launch.
@@ -87,11 +84,8 @@ Empirical profiling in isolated subprocesses (`scratch/test_pure_onnx.py`) with 
 
 ## 5. PRODUCTION RECOMMENDATION
 
-1. **Primary Recommendation (Hugging Face Spaces - Recommended & Robust):**  
-   - Deploy directly to **Hugging Face Spaces** (CPU Basic tier: **16 GB RAM**, **2 vCPUs**, 50 GB disk, free forever).
-   - Providing 32x the memory headroom of Render Free (16,384 MB vs 512 MB), Hugging Face Spaces completely eliminates memory pressure, cold-start latency constraints, and OOM killer risks without complex container optimizations. See `docs/HF_SPACES_GUIDE.md`.
-
-2. **Secondary / Optional Deployment (Render Web Service):**  
-   - Render remains supported as an optional deployment target.
-   - Requires keeping the background thread port-first startup in `app.py` to prevent health check port scan timeouts.
-   - For free-tier long-term stability within Render's tight 512 MB cgroup limit, inference should be converted to pure ONNX runtime (`243.55 MB peak RSS`), or the service upgraded to a paid plan ($7/mo with 2 GB RAM).
+1. **For Current Render Free-Tier Web Service:**  
+   - Keep the background thread startup in `app.py` to prevent port scan timeouts.
+   - For long-term free-tier stability without OOM risks, migrate inference to the pure ONNX runtime pipeline (`243.55 MB peak RSS`).
+2. **For Zero-Cost High-Memory Deployment (Hugging Face Spaces):**  
+   - Deploy directly to Hugging Face Spaces (CPU Basic tier: **16 GB RAM**, **2 vCPU**, free). See `docs/HF_SPACES_GUIDE.md`.

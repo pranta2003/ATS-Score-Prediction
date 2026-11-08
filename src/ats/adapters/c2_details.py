@@ -3,7 +3,6 @@ import glob
 import json
 import pandas as pd
 import numpy as np
-from huggingface_hub import snapshot_download
 from .base import BaseDatasetAdapter, compute_sha1
 
 
@@ -14,6 +13,7 @@ class C2DetailsAdapter(BaseDatasetAdapter):
         super().__init__(name=repo_id)
 
     def load_raw(self) -> pd.DataFrame:
+        from huggingface_hub import snapshot_download
         path = snapshot_download(self.name, repo_type="dataset", allow_patterns="*.json")
         json_files = glob.glob(os.path.join(path, "*.json"))
 
