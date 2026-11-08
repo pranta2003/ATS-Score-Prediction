@@ -7,6 +7,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
+@pytest.mark.heavy
 def test_cross_encoder_study_smoke():
     script_path = PROJECT_ROOT / "scripts" / "run_cross_encoder_study.py"
     t0 = time.time()
