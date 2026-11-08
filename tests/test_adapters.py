@@ -17,6 +17,7 @@ def test_text_normalization_and_sha1():
     assert len(compute_sha1(t1)) == 40
 
 
+@pytest.mark.heavy
 @pytest.mark.parametrize("adapter_name", ["control", "c1", "c2", "c3", "c4", "c5"])
 def test_adapter_schema_and_integrity(adapter_name):
     # For large datasets like c3, limit rows to 100 in unit test for speed

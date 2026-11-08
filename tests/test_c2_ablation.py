@@ -2,8 +2,10 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+import pytest
 
 
+@pytest.mark.heavy
 def test_c2_ablation_smoke():
     start_time = time.time()
     cmd = [
