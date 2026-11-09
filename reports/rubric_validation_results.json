@@ -1,0 +1,52 @@
+{
+  "dataset": "cnamuangtoun/resume-job-description-fit",
+  "sample_size": 2000,
+  "correlation": {
+    "spearman_r": -0.01725642208775602,
+    "spearman_pvalue": 0.44052580533673485
+  },
+  "discrimination": {
+    "binary_good_vs_nofit_auc": 0.48065811670884134,
+    "good_vs_rest_auc": 0.475801873779815,
+    "nofit_vs_rest_auc": 0.4977277164526545,
+    "macro_directional_auc": 0.4867647951162347
+  },
+  "within_jd_ranking": {
+    "eligible_jds": 71,
+    "mean_candidates_per_jd": 11.915492957746478,
+    "mean_within_jd_auc": 0.5045290292649448,
+    "median_within_jd_auc": 0.5
+  },
+  "behavior_tests": {
+    "determinism": {
+      "passed": true,
+      "score_run_1": 59.1,
+      "score_run_2": 59.1
+    },
+    "tailoring_effect": {
+      "passed": true,
+      "base_score": 59.1,
+      "tailored_score": 79.0,
+      "delta_points": 19.9
+    },
+    "keyword_stuffing_cap": {
+      "passed": true,
+      "base_score": 59.1,
+      "stuffed_score": 59.1,
+      "delta_points": 0.0,
+      "explanation": "Set-based tokenization prevents repeated keywords from gaming match score."
+    },
+    "jd_swap_sensitivity": {
+      "passed": true,
+      "original_jd_score": 59.1,
+      "swapped_jd_score": 39.8,
+      "delta_points": 19.3
+    }
+  },
+  "formatting_decoupling": {
+    "formatting_moved_out_of_fit_score": true,
+    "mean_formatting_score": 47.67,
+    "std_formatting_score": 7.1986873803492815
+  },
+  "elapsed_seconds": 63.31
+}

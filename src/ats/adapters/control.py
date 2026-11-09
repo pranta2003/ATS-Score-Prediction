@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-from datasets import load_dataset
 from .base import BaseDatasetAdapter, compute_sha1
 
 
@@ -26,6 +25,7 @@ class ControlAdapter(BaseDatasetAdapter):
             else:
                 return pd.concat([df_tr, df_val], ignore_index=True)
         else:
+            from datasets import load_dataset
             ds = load_dataset("0xnbk/resume-ats-score-v1-en")
             if self.split in ds:
                 return ds[self.split].to_pandas()

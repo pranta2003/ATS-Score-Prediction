@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from huggingface_hub import hf_hub_download
 from .base import BaseDatasetAdapter, compute_sha1
 
 
@@ -12,6 +11,7 @@ class C3MatchingAdapter(BaseDatasetAdapter):
         self.max_rows = max_rows
 
     def load_raw(self) -> pd.DataFrame:
+        from huggingface_hub import hf_hub_download
         p_cv = hf_hub_download(self.name, "cv.csv", repo_type="dataset")
         p_job = hf_hub_download(self.name, "job.csv", repo_type="dataset")
         p_matches = hf_hub_download(self.name, "matches.csv", repo_type="dataset")

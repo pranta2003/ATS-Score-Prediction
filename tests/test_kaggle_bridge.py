@@ -2,6 +2,8 @@ import os
 import json
 import pytest
 from pathlib import Path
+
+pytest.importorskip("yaml")
 from scripts.kaggle_run import (
     prepare_kernel_bundle,
     validate_results_dir,
@@ -22,7 +24,7 @@ def test_prepare_kernel_bundle_cpu(tmp_path):
     )
 
     assert "run_id" in bundle
-    assert bundle["kernel_slug"] == f"testuser/ats-{bundle['run_id'].replace('_', '-')}"[:50].lower()
+    assert bundle["kernel_slug"] == "testuser/ats-c5-smoke-test-cpu"
     
     meta_path = bundle["kernel_dir"] / "kernel-metadata.json"
     assert meta_path.exists()

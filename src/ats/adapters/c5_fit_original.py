@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from datasets import load_dataset
 from .base import BaseDatasetAdapter, compute_sha1
 
 
@@ -12,6 +11,7 @@ class C5FitOriginalAdapter(BaseDatasetAdapter):
         self.split = split
 
     def load_raw(self) -> pd.DataFrame:
+        from datasets import load_dataset
         ds = load_dataset(self.name)
         if self.split in ds:
             return ds[self.split].to_pandas()

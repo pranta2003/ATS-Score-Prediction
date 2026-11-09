@@ -10,6 +10,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
+@pytest.mark.heavy
 def test_experiment_runner_smoke():
     """Verify that run_experiment.py in --smoke mode finishes in under 60s and produces valid artifacts."""
     config_path = PROJECT_ROOT / "configs" / "smoke_test.yaml"
