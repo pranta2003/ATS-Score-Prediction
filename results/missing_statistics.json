@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-08T19:52:29Z",
+  "timestamp": "2026-11-09T12:31:47Z",
   "tier_comparisons_vs_t2": {
     "T1_Lexical_vs_T2_Dense": {
       "S1_cold_resume": {
@@ -148,12 +148,13 @@
     "S1_cold_resume": {
       "num_eligible_jds": 137,
       "avg_candidates_per_jd": 30.1,
-      "protocol_note": "Candidates originate from different fold models; indicative only",
+      "protocol_note": "Candidates originate from different fold models; indicative only.",
+      "baseline_explanation": "The JD-prior baseline is omitted because a JD prior is constant inside a JD, yielding AUC 0.5000 by definition; previous 0.2520 values were a leave-one-out fold artifact.",
       "model_p_good_auc": {
         "mean": 0.6747,
         "ci95_of_mean": [
-          0.6403,
-          0.7065
+          0.6413,
+          0.7071
         ],
         "median": 0.6691,
         "iqr": [
@@ -161,35 +162,23 @@
           0.8
         ]
       },
-      "prior_auc": {
-        "mean": 0.252,
-        "ci95_of_mean": [
-          0.228,
-          0.2748
-        ],
-        "median": 0.2897,
-        "iqr": [
-          0.125,
-          0.366
-        ]
-      },
       "random_auc": {
-        "mean": 0.5185,
+        "mean": 0.4719,
         "ci95_of_mean": [
-          0.4875,
-          0.5496
+          0.4368,
+          0.5036
         ],
-        "median": 0.5115,
+        "median": 0.4638,
         "iqr": [
-          0.4,
-          0.6115
+          0.3667,
+          0.5818
         ]
       },
       "model_ndcg_at_5": {
         "mean": 0.6855,
         "ci95_of_mean": [
-          0.6427,
-          0.723
+          0.6474,
+          0.7264
         ],
         "median": 0.6844,
         "iqr": [
@@ -197,40 +186,28 @@
           0.8539
         ]
       },
-      "prior_ndcg_at_5": {
-        "mean": 0.3416,
-        "ci95_of_mean": [
-          0.3072,
-          0.3768
-        ],
-        "median": 0.3913,
-        "iqr": [
-          0.1751,
-          0.5
-        ]
-      },
       "random_ndcg_at_5": {
-        "mean": 0.5452,
+        "mean": 0.5414,
         "ci95_of_mean": [
-          0.4989,
-          0.5868
+          0.4937,
+          0.5857
         ],
-        "median": 0.5531,
+        "median": 0.5538,
         "iqr": [
-          0.3843,
-          0.7654
+          0.396,
+          0.7227
         ]
       }
     },
     "S2_cold_jd": {
       "num_eligible_jds": 137,
       "avg_candidates_per_jd": 30.1,
-      "protocol_note": "Single model per JD",
+      "protocol_note": "Single model per JD evaluated on held-out JDs.",
       "model_p_good_auc": {
         "mean": 0.7524,
         "ci95_of_mean": [
-          0.7162,
-          0.7902
+          0.7172,
+          0.785
         ],
         "median": 0.788,
         "iqr": [
@@ -241,8 +218,8 @@
       "prior_auc": {
         "mean": 0.6637,
         "ci95_of_mean": [
-          0.6262,
-          0.7017
+          0.6216,
+          0.7025
         ],
         "median": 0.7222,
         "iqr": [
@@ -250,23 +227,49 @@
           0.8365
         ]
       },
-      "random_auc": {
-        "mean": 0.5185,
+      "resume_only_model_auc": {
+        "mean": 0.6662,
         "ci95_of_mean": [
-          0.4875,
-          0.5496
+          0.6272,
+          0.7063
         ],
-        "median": 0.5115,
+        "median": 0.7304,
         "iqr": [
-          0.4,
-          0.6115
+          0.5556,
+          0.8365
+        ]
+      },
+      "random_auc": {
+        "mean": 0.4906,
+        "ci95_of_mean": [
+          0.4565,
+          0.5246
+        ],
+        "median": 0.5,
+        "iqr": [
+          0.3862,
+          0.5964
+        ]
+      },
+      "delta_vs_resume_prior_auc": {
+        "mean": 0.0887,
+        "ci95_of_mean": [
+          0.049,
+          0.1281
+        ]
+      },
+      "delta_vs_resume_only_model_auc": {
+        "mean": 0.0862,
+        "ci95_of_mean": [
+          0.045,
+          0.1215
         ]
       },
       "model_ndcg_at_5": {
         "mean": 0.7534,
         "ci95_of_mean": [
-          0.7145,
-          0.7901
+          0.709,
+          0.7951
         ],
         "median": 0.8304,
         "iqr": [
@@ -277,8 +280,8 @@
       "prior_ndcg_at_5": {
         "mean": 0.6345,
         "ci95_of_mean": [
-          0.5819,
-          0.6802
+          0.5878,
+          0.684
         ],
         "median": 0.6516,
         "iqr": [
@@ -286,16 +289,42 @@
           0.927
         ]
       },
-      "random_ndcg_at_5": {
-        "mean": 0.5452,
+      "resume_only_model_ndcg_at_5": {
+        "mean": 0.6343,
         "ci95_of_mean": [
-          0.4989,
-          0.5868
+          0.5873,
+          0.6797
         ],
-        "median": 0.5531,
+        "median": 0.6367,
         "iqr": [
-          0.3843,
-          0.7654
+          0.4469,
+          0.9152
+        ]
+      },
+      "random_ndcg_at_5": {
+        "mean": 0.5702,
+        "ci95_of_mean": [
+          0.5251,
+          0.6132
+        ],
+        "median": 0.5774,
+        "iqr": [
+          0.3869,
+          0.8304
+        ]
+      },
+      "delta_vs_resume_prior_ndcg_at_5": {
+        "mean": 0.1189,
+        "ci95_of_mean": [
+          0.0741,
+          0.1644
+        ]
+      },
+      "delta_vs_resume_only_model_ndcg_at_5": {
+        "mean": 0.119,
+        "ci95_of_mean": [
+          0.0752,
+          0.1652
         ]
       }
     }
@@ -304,6 +333,14 @@
     "S1_cold_resume": {
       "raw_ece": 0.0496,
       "calibrated_ece": 0.0188,
+      "outer_temperatures": [
+        1.174,
+        1.1886,
+        1.1982,
+        1.2076,
+        1.1861
+      ],
+      "median_temperature": 1.19,
       "mean_temperature": 1.19,
       "delta_ece": -0.0309,
       "reliability_table_raw": [
@@ -412,7 +449,16 @@
     "S2_cold_jd": {
       "raw_ece": 0.1333,
       "calibrated_ece": 0.0357,
+      "outer_temperatures": [
+        1.8818,
+        1.8405,
+        1.9327,
+        2.0159,
+        1.8901
+      ],
+      "median_temperature": 1.89,
       "mean_temperature": 1.91,
+      "serving_default_temperature": 1.89,
       "delta_ece": -0.0976,
       "reliability_table_raw": [
         {
@@ -517,7 +563,7 @@
         }
       ]
     },
-    "recommendation": "Calibrated probabilities are strongly recommended. Temperature scaling reduces ECE on S1 from 0.0496 to 0.0188 (optimal T=1.19) and on S2 from 0.1333 to 0.0357 (optimal T=1.91), aligning confidence with empirical accuracy for recruiter decisions."
+    "recommendation": "Calibrated probabilities are strongly recommended. Nested temperature scaling reduces ECE on S1 from 0.0496 to 0.0188 (median T=1.19) and on S2 from 0.1333 to 0.0357 (median T=1.89), aligning confidence with empirical accuracy for recruiter decisions."
   },
   "cross_encoder_truncation": {
     "model_name": "sentence-transformers/all-MiniLM-L6-v2",

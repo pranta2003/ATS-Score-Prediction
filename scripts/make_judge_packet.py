@@ -213,7 +213,14 @@ def generate_judge_packet():
     for scen_key, scen_title in scen_labels:
         scen_dict = j1.get(scen_key, {}) if j1 else {}
         first_row = True
-        for m_key in ["majority", "jd_prior", "resume_prior", "logistic", "lightgbm", "xgboost"]:
+        # Keep JD-prior on S1 where meaningful, and Resume-prior on S2
+        allowed_models = ["majority", "logistic", "lightgbm", "xgboost"]
+        if scen_key == "S1_cold_resume":
+            allowed_models = ["majority", "jd_prior", "resume_prior", "logistic", "lightgbm", "xgboost"]
+        elif scen_key == "S2_cold_jd":
+            allowed_models = ["majority", "resume_prior", "logistic", "lightgbm", "xgboost"]
+        
+        for m_key in allowed_models:
             if m_key not in scen_dict:
                 continue
             m = scen_dict[m_key]
@@ -358,8 +365,8 @@ The table below catalogs every historical discrepancy between unverified values 
 - **Empirical Generalization Hierarchy on C5**:
   - **Cold-Resume (S1)**: {s1_acc} accuracy {s1_acc_ci}, {s1_f1} Macro-F1, **{s1_auc} Macro ROC-AUC**.
   - **Cold-JD (S2)**: {s2_acc} accuracy {s2_acc_ci}, {s2_f1} Macro-F1, **{s2_auc} Macro ROC-AUC**.
-  - **Double-Cold (S3)**: **{s3_acc} accuracy** {s3_acc_ci} (5-seed verification) and **{rec_s3_t2_acc} accuracy** (20-seed ablation), {s3_f1} Macro-F1, **{s3_auc} Macro ROC-AUC** (against a {maj_s3_acc} majority baseline).
-- **Key Insight (The Base-Rate Trap)**: Models evaluated on Cold-Resume (S1) heavily exploit repeated JD prior probabilities (out-of-fold JD prior alone yields {jd_prior_acc} accuracy). When deployed against unseen job descriptions (S2/S3), that prior vanishes. Claims of >90% accuracy on this task under honest double-cold evaluation are not supported by any evaluated model on C5 (best S3 accuracy across evaluated models is {s3_acc} [5 seeds] and {rec_s3_j1_acc} [20 seeds], against ~49-52% majority baseline).
+  - **Double-Cold (S3)**: Across evaluated models under S3 (20 seeds), accuracy ranges from **51.15% (LightGBM)** to **51.33% (XGBoost)** [51.27% Logistic Regression], against a **{maj_s3_acc}** majority baseline ({s3_f1} Macro-F1, **0.6541 to 0.6691 Macro ROC-AUC**). In the 5-seed verification gate, accuracy was **{s3_acc}** {s3_acc_ci}.
+- **Key Insight (The Base-Rate Trap)**: Models evaluated on Cold-Resume (S1) heavily exploit repeated JD prior probabilities (out-of-fold JD prior alone yields {jd_prior_acc} accuracy). When deployed against unseen job descriptions (S2/S3), that prior vanishes. Claims of >90% accuracy on this task under honest double-cold evaluation are not supported by any evaluated model on C5 (under S3, accuracy across evaluated models ranges from 51.15% [LightGBM] to 51.33% [XGBoost] across 20 seeds, against ~49-52% majority baseline; 5-seed gate: {s3_acc}).
 
 ---
 
@@ -389,30 +396,41 @@ To protect developer workstation constraints (4-thread Intel i5, 8 GB RAM, no GP
 
 ---
 
-## 5. Verification Gate & Generalization Hierarchy (C5)
+## 5. Model Evaluation & Verification Gate Overview
 
-Metrics computed on C5 ({c5_pairs} pairs, {c5_res} resumes, {c5_jds} JDs) with **95% cluster-bootstrap confidence intervals** (source: `reports/c5_verification_results.json`):
+### 5.1 Canonical J1 Multi-Model Benchmark (20 Seeds on C5)
 
-| Split Protocol | Scenario Description | Accuracy (95% CI) | Macro-F1 (95% CI) | Macro ROC-AUC | Binary Good-vs-NoFit AUC |
+Evaluated across 8,000 pairs, 643 resumes, 351 JDs with 20 independent seeds under S3 and 5-fold GroupKFold under S1 and S2 (source: `reports/j1_sweep_results.json`):
+
+| Split Scenario | Model Architecture | Accuracy (95% CI) | Macro-F1 | Macro ROC-AUC | Execution Time |
 |---|---|---|---|---|---|
-| **S1: Cold-Resume** | GroupKFold by `resume_id` (JDs repeat across folds) | **{s1_acc}** {s1_acc_ci} | **{s1_f1}** {s1_f1_ci} | **{s1_auc}** | **{s1_bin_auc}** |
-| **S2: Cold-JD** | GroupKFold by `jd_id` (Resumes repeat across folds) | **{s2_acc}** {s2_acc_ci} | **{s2_f1}** {s2_f1_ci} | **{s2_auc}** | **{s2_bin_auc}** |
-| **S3: Double-Cold**| Disjoint resumes AND JDs (5 seeds) | **{s3_acc}** {s3_acc_ci} | **{s3_f1}** {s3_f1_ci} | **{s3_auc}** | **{s3_bin_auc}** |
-| **Baseline: Majority**| Always predict majority class ("No Fit") | {maj_acc} | 22.96% | 0.5000 | 0.5000 |
-| **Baseline: JD-Prior**| Out-of-fold JD marginal class probabilities | {jd_prior_acc} | {jd_prior_f1} | NOT AVAILABLE | NOT AVAILABLE |
+{j1_table_body}
+
+*Note on S3 Performance Range: Across evaluated models under S3 (20 seeds), accuracy ranges from **51.15% (LightGBM)** to **51.33% (XGBoost)** [51.27% for Logistic Regression], confirming that all model families converge near the 49.23% majority baseline under double-cold evaluation.*
+
+### 5.2 Verification Gate & Empirical Studies Summary
+
+Independent verification sweeps and empirical studies on C5 and C2, each labelled with its source artifact and evaluation scope:
+
+| Empirical Study / Protocol | Scope / Sample Size / Seeds | Model Architecture | Accuracy (95% CI) | Macro-F1 (95% CI) | Macro ROC-AUC | Source Artifact |
+|---|---|---|---|---|---|---|
+| **S1: 5-Fold Verification Gate** | 5 Folds (8,000 pairs, `resume_id`) | LightGBM (T2 Dense) | **{s1_acc}** {s1_acc_ci} | **{s1_f1}** {s1_f1_ci} | **{s1_auc}** | `reports/c5_verification_results.json` |
+| **S2: 5-Fold Verification Gate** | 5 Folds (8,000 pairs, `jd_id`) | LightGBM (T2 Dense) | **{s2_acc}** {s2_acc_ci} | **{s2_f1}** {s2_f1_ci} | **{s2_auc}** | `reports/c5_verification_results.json` |
+| **S3: 5-Seed Verification Gate** | 5 Disjoint Seeds (187 test pairs/seed) | LightGBM (T2 Dense) | **{s3_acc}** {s3_acc_ci} | **{s3_f1}** {s3_f1_ci} | **{s3_auc}** | `reports/c5_verification_results.json` |
+| **Random Stratified Leakage** | 5 Folds (8,000 pairs, un-grouped) | LightGBM (T2 Dense) | **{rand_acc}** {rand_acc_ci} | **{rand_f1}** {rand_f1_ci} | **{rand_auc}** | `results/leakage_comparison_results.json` |
+| **S1: Leakage Cold-Resume** | 5 Folds (8,000 pairs, Seed 42) | LightGBM (T2 Dense) | **{leak_s1_acc}** {leak_s1_acc_ci} | **{leak_s1_f1}** {leak_s1_f1_ci} | **{leak_s1_auc}** | `results/leakage_comparison_results.json` |
+| **S2: Leakage Cold-JD** | 5 Folds (8,000 pairs, Seed 42) | LightGBM (T2 Dense) | **{leak_s2_acc}** {leak_s2_acc_ci} | **{leak_s2_f1}** {leak_s2_f1_ci} | **{leak_s2_auc}** | `results/leakage_comparison_results.json` |
+| **Cross-Encoder vs Bi-Encoder (S2)** | 3 Split Seeds (42, 43, 44) | MiniLM-L6 vs Bi-Encoder | Cross: {s2_ce_ce_acc} / Bi: {s2_ce_bi_acc} | Cross: {s2_ce_ce_f1} / Bi: {s2_ce_bi_f1} | Cross underperforms by {s2_ce_d_acc} | `reports/ce_vs_bi_results.json` |
+| **Cross-Encoder vs Bi-Encoder (S3)** | 3 Split Seeds (42, 43, 44) | MiniLM-L6 vs Bi-Encoder | Cross: {s3_ce_ce_acc} / Bi: {s3_ce_bi_acc} | Cross: {s3_ce_ce_f1} / Bi: {s3_ce_bi_f1} | Cross underperforms by {s3_ce_d_acc} | `reports/ce_vs_bi_results.json` |
+| **C2 Rubric Ablation (S1 Full)** | 5 Folds (878 valid pairs, 26 JDs) | Full Combined (F4) | 57.40% | NOT AVAILABLE | 0.7190 ($R^2=0.4401$) | `reports/c2_ablation_results.json` |
+| **C2 Rubric Ablation (S2 Full)** | 5 Folds (878 valid pairs, 26 JDs) | Full Combined (F4) | 55.58% | NOT AVAILABLE | 0.6838 ($R^2=0.2867$) | `reports/c2_ablation_results.json` |
 
 ### Leakage and Sensitivity Findings
 1. **A4 JD-Swap Sensitivity Test**: Swapping JDs at test time flipped **{a4_flip} of predictions** with an L1 probability shift of **{a4_shift}**, verifying that the MiniLM interaction features are genuinely sensitive to JD text content.
 2. **A6 HuggingFace Benchmark Leakage**: The official test split of C5 holds out 100% of JDs (0/71 seen in train) but contains **{a6_res_pct}% overlapping resumes ({a6_seen_res} / {a6_tot_res} seen in train)**. Thus, the official HuggingFace benchmark evaluates Cold-JD / Warm-Resume, explaining why published scores sit between S1 and S2.
 
-### 5.1 Like-for-Like Leakage Study (Random Pair vs Grouped Splits)
+### 5.3 Like-for-Like Leakage Gaps
 Evaluated on C5 (8,000 pairs) comparing the exact same Tier 2 Dense + LightGBM architecture across split strategies (source: `results/leakage_comparison_results.json`):
-
-| Protocol | Split Grouping | Accuracy (95% CI) | Macro-F1 (95% CI) | Macro ROC-AUC |
-|---|---|---|---|---|
-| **Random Stratified** | None (Random pair split) | **{rand_acc}** {rand_acc_ci} | **{rand_f1}** {rand_f1_ci} | **{rand_auc}** |
-| **S1: Cold-Resume** | Grouped by `resume_id` (643 groups) | **{leak_s1_acc}** {leak_s1_acc_ci} | **{leak_s1_f1}** {leak_s1_f1_ci} | **{leak_s1_auc}** |
-| **S2: Cold-JD** | Grouped by `jd_id` (351 groups) | **{leak_s2_acc}** {leak_s2_acc_ci} | **{leak_s2_f1}** {leak_s2_f1_ci} | **{leak_s2_auc}** |
 
 | Measured Leakage Gap | $\Delta$ Accuracy (95% Paired CI) | $\Delta$ Macro-F1 (95% Paired CI) | $\Delta$ Macro-AUC |
 |---|---|---|---|
@@ -461,6 +479,17 @@ To ensure zero ambiguity across different evaluation sweeps, the table below com
 | **S3: Double-Cold**| 5-Seed Verification Gate | 5 Independent Seeds | LightGBM (T2 Dense) | {rec_s3_verif_acc} | {rec_s3_verif_auc} | {s3_bin_auc} (Seed mean) | `reports/c5_verification_results.json` |
 | | J1 Benchmark Sweep | 20 Independent Seeds | LightGBM | {rec_s3_j1_acc} | {rec_s3_j1_auc} | NOT AVAILABLE | `reports/j1_sweep_results.json` |
 | | Feature Ablation Sweep | 20 Independent Seeds | LightGBM (T2 Dense) | {rec_s3_t2_acc} | {rec_s3_t2_auc} | NOT AVAILABLE | `reports/c5_feature_ablation_results.json` |
+
+### GroupKFold Partitioning Variance (Leakage Study vs J1 Sweep)
+
+| Split Protocol | Evaluation Sweep | Split Grouping / Seed | Model Architecture | Accuracy | Macro-F1 | Macro ROC-AUC | Source Artifact |
+|---|---|---|---|---|---|---|---|
+| **S1: Cold-Resume** | J1 Benchmark Sweep | Default GroupKFold (`resume_id`, 643 groups) | LightGBM (T2 Dense) | 66.03% | 63.30% | 0.8317 | `reports/j1_sweep_results.json` |
+| **S1: Cold-Resume** | Leakage Comparison | Seed 42 GroupKFold (`resume_id`, 643 groups) | LightGBM (T2 Dense) | 66.16% [63.85%, 68.32%] | 63.40% [60.67%, 65.84%] | 0.8307 | `results/leakage_comparison_results.json` |
+| **S2: Cold-JD** | J1 Benchmark Sweep | Default GroupKFold (`jd_id`, 351 groups) | LightGBM (T2 Dense) | 55.45% | 43.68% | 0.7267 | `reports/j1_sweep_results.json` |
+| **S2: Cold-JD** | Leakage Comparison | Seed 42 GroupKFold (`jd_id`, 351 groups) | LightGBM (T2 Dense) | 56.20% [53.79%, 58.65%] | 45.70% [42.44%, 48.73%] | 0.7294 | `results/leakage_comparison_results.json` |
+
+**Partitioning Variance Explanation:** Both sweeps evaluate the exact same Tier 2 Dense + LightGBM architecture on identical C5 data (8,000 pairs). The slight divergence ($\Delta = +0.13\text{{ pp}}$ on S1, $\Delta = +0.75\text{{ pp}}$ on S2) is entirely attributable to standard GroupKFold partitioning variance across random fold orderings and entity group assignments. Because job descriptions have skewed cluster sizes (ranging from 1 to 142 pairs per JD), different fold partitions assign slightly different candidate cluster weights to each test fold, well within the 95% confidence intervals ([63.85%, 68.32%] for S1 and [53.79%, 58.65%] for S2).
 
 ### Key Reconciliation Findings
 1. **S3 Accuracy & The +0.38 Shift Audit**:
