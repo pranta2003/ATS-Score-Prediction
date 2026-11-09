@@ -353,105 +353,192 @@ def main():
     # Part 4: Within-JD Ranking (NDCG@5 and AUC)
     # -----------------------------------------------------------------
     print("\n--- Step 2d: Evaluating Within-JD Ranking ---", flush=True)
-    def evaluate_within_jd_ranking(probs, prior_probs, scenario_name):
-        eligible_jds = []
-        aucs_model = []
-        aucs_prior = []
-        aucs_random = []
-        ndcgs_model = []
-        ndcgs_prior = []
-        ndcgs_random = []
-        candidate_counts = []
 
-        rng = np.random.RandomState(42)
+    # Load pre-trained S2 resume-only OOF predictions (from resume embeddings only)
+    s2_res_model_cache = PROJECT_ROOT / "cache" / "s2_resume_only_oof_probs.npy"
+    if s2_res_model_cache.exists():
+        s2_res_model_probs = np.load(s2_res_model_cache)
+    else:
+        print("Training S2 resume-only LightGBM...", flush=True)
+        meta_df = pd.read_parquet(PROJECT_ROOT / "cache" / "embeddings" / "c5_doc_meta.parquet")
+        doc_embs = np.load(PROJECT_ROOT / "cache" / "embeddings" / "c5_doc_emb.npy")
+        doc_emb_map = {row["text_id"]: doc_embs[int(row["array_idx"])] for _, row in meta_df.iterrows()}
+        X_res_only = np.array([doc_emb_map[rid] for rid in df["resume_id"]], dtype=np.float32)
+        s2_res_model_probs = np.zeros((len(df), 3), dtype=np.float32)
+        for tr_idx, val_idx in gkf_s2.split(X_res_only, y, groups=df["jd_id"]):
+            clf_res = lgb.LGBMClassifier(**lgb_params)
+            clf_res.fit(X_res_only[tr_idx], y[tr_idx])
+            s2_res_model_probs[val_idx] = clf_res.predict_proba(X_res_only[val_idx])
+        np.save(s2_res_model_cache, s2_res_model_probs)
 
-        for jid, group in df.groupby("jd_id"):
-            idx = group.index.values
-            y_grp = y[idx]
-            has_good = np.any(y_grp == 2)
-            has_nofit = np.any(y_grp == 0)
+    # Eligible JDs: >= 5 candidates with >= 1 Good Fit and >= 1 No Fit
+    eligible_jds = []
+    candidate_counts = []
+    aucs_s2_model, aucs_s2_prior, aucs_s2_res_model, aucs_s2_rand = [], [], [], []
+    ndcgs_s2_model, ndcgs_s2_prior, ndcgs_s2_res_model, ndcgs_s2_rand = [], [], [], []
 
-            if len(idx) >= 5 and has_good and has_nofit:
-                eligible_jds.append(jid)
-                candidate_counts.append(len(idx))
+    aucs_s1_model, aucs_s1_rand = [], []
+    ndcgs_s1_model, ndcgs_s1_rand = [], []
 
-                mask = (y_grp != 1)
-                y_bin_grp = (y_grp[mask] == 2).astype(int)
-                score_model = probs[idx[mask], 2]
-                score_prior = prior_probs[idx[mask], 2]
-                score_rand = rng.rand(len(score_model))
+    rng = np.random.RandomState(42)
 
-                if len(np.unique(y_bin_grp)) == 2:
-                    aucs_model.append(roc_auc_score(y_bin_grp, score_model))
-                    if len(np.unique(score_prior)) > 1:
-                        aucs_prior.append(roc_auc_score(y_bin_grp, score_prior))
-                    else:
-                        aucs_prior.append(0.5)
-                    aucs_random.append(roc_auc_score(y_bin_grp, score_rand))
+    for jid, group in df.groupby("jd_id"):
+        idx = group.index.values
+        y_grp = y[idx]
+        has_good = np.any(y_grp == 2)
+        has_nofit = np.any(y_grp == 0)
 
-                rel_true = np.array([2 if yi == 2 else (1 if yi == 1 else 0) for yi in y_grp])
-                k = min(5, len(idx))
-                ndcg_m = ndcg_score([rel_true], [probs[idx, 2]], k=k)
-                ndcg_p = ndcg_score([rel_true], [prior_probs[idx, 2]], k=k)
-                ndcg_r = ndcg_score([rel_true], [rng.rand(len(idx))], k=k)
-                ndcgs_model.append(ndcg_m)
-                ndcgs_prior.append(ndcg_p)
-                ndcgs_random.append(ndcg_r)
+        if len(idx) >= 5 and has_good and has_nofit:
+            eligible_jds.append(jid)
+            candidate_counts.append(len(idx))
 
-        M = len(eligible_jds)
-        def boot_ci_mean(arr):
-            b_means = [np.mean(rng.choice(arr, size=M, replace=True)) for _ in range(1000)]
-            return [round(float(np.percentile(b_means, 2.5)), 4), round(float(np.percentile(b_means, 97.5)), 4)]
+            mask = (y_grp != 1)
+            y_bin_grp = (y_grp[mask] == 2).astype(int)
 
-        return {
-            "num_eligible_jds": len(eligible_jds),
-            "avg_candidates_per_jd": round(float(np.mean(candidate_counts)), 1),
-            "protocol_note": "Single model per JD" if scenario_name == "S2" else "Candidates originate from different fold models; indicative only",
-            "model_p_good_auc": {
-                "mean": round(float(np.mean(aucs_model)), 4),
-                "ci95_of_mean": boot_ci_mean(aucs_model),
-                "median": round(float(np.median(aucs_model)), 4),
-                "iqr": [round(float(np.percentile(aucs_model, 25)), 4), round(float(np.percentile(aucs_model, 75)), 4)],
-            },
-            "prior_auc": {
-                "mean": round(float(np.mean(aucs_prior)), 4),
-                "ci95_of_mean": boot_ci_mean(aucs_prior),
-                "median": round(float(np.median(aucs_prior)), 4),
-                "iqr": [round(float(np.percentile(aucs_prior, 25)), 4), round(float(np.percentile(aucs_prior, 75)), 4)],
-            },
-            "random_auc": {
-                "mean": round(float(np.mean(aucs_random)), 4),
-                "ci95_of_mean": boot_ci_mean(aucs_random),
-                "median": round(float(np.median(aucs_random)), 4),
-                "iqr": [round(float(np.percentile(aucs_random, 25)), 4), round(float(np.percentile(aucs_random, 75)), 4)],
-            },
-            "model_ndcg_at_5": {
-                "mean": round(float(np.mean(ndcgs_model)), 4),
-                "ci95_of_mean": boot_ci_mean(ndcgs_model),
-                "median": round(float(np.median(ndcgs_model)), 4),
-                "iqr": [round(float(np.percentile(ndcgs_model, 25)), 4), round(float(np.percentile(ndcgs_model, 75)), 4)],
-            },
-            "prior_ndcg_at_5": {
-                "mean": round(float(np.mean(ndcgs_prior)), 4),
-                "ci95_of_mean": boot_ci_mean(ndcgs_prior),
-                "median": round(float(np.median(ndcgs_prior)), 4),
-                "iqr": [round(float(np.percentile(ndcgs_prior, 25)), 4), round(float(np.percentile(ndcgs_prior, 75)), 4)],
-            },
-            "random_ndcg_at_5": {
-                "mean": round(float(np.mean(ndcgs_random)), 4),
-                "ci95_of_mean": boot_ci_mean(ndcgs_random),
-                "median": round(float(np.median(ndcgs_random)), 4),
-                "iqr": [round(float(np.percentile(ndcgs_random, 25)), 4), round(float(np.percentile(ndcgs_random, 75)), 4)],
-            },
-        }
+            # S2 scoring
+            score_s2_model = s2_oof_probs[idx[mask], 2]
+            score_s2_prior = s2_resume_prior_probs[idx[mask], 2]
+            score_s2_res_model = s2_res_model_probs[idx[mask], 2]
+            score_rand = rng.rand(len(score_s2_model))
 
-    s1_ranking = evaluate_within_jd_ranking(s1_oof_probs, s1_jd_prior_probs, "S1")
-    s2_ranking = evaluate_within_jd_ranking(s2_oof_probs, s2_resume_prior_probs, "S2")
+            if len(np.unique(y_bin_grp)) == 2:
+                aucs_s2_model.append(roc_auc_score(y_bin_grp, score_s2_model))
+                aucs_s2_prior.append(roc_auc_score(y_bin_grp, score_s2_prior) if len(np.unique(score_s2_prior)) > 1 else 0.5)
+                aucs_s2_res_model.append(roc_auc_score(y_bin_grp, score_s2_res_model))
+                aucs_s2_rand.append(roc_auc_score(y_bin_grp, score_rand))
+
+            k = min(5, len(idx))
+            rel_true = np.array([2 if yi == 2 else (1 if yi == 1 else 0) for yi in y_grp])
+            ndcgs_s2_model.append(ndcg_score([rel_true], [s2_oof_probs[idx, 2]], k=k))
+            ndcgs_s2_prior.append(ndcg_score([rel_true], [s2_resume_prior_probs[idx, 2]], k=k))
+            ndcgs_s2_res_model.append(ndcg_score([rel_true], [s2_res_model_probs[idx, 2]], k=k))
+            ndcgs_s2_rand.append(ndcg_score([rel_true], [rng.rand(len(idx))], k=k))
+
+            # S1 scoring (Model and Random only)
+            score_s1_model = s1_oof_probs[idx[mask], 2]
+            score_s1_rand = rng.rand(len(score_s1_model))
+            if len(np.unique(y_bin_grp)) == 2:
+                aucs_s1_model.append(roc_auc_score(y_bin_grp, score_s1_model))
+                aucs_s1_rand.append(roc_auc_score(y_bin_grp, score_s1_rand))
+            ndcgs_s1_model.append(ndcg_score([rel_true], [s1_oof_probs[idx, 2]], k=k))
+            ndcgs_s1_rand.append(ndcg_score([rel_true], [rng.rand(len(idx))], k=k))
+
+    M = len(eligible_jds)
+    def boot_ci_mean(arr):
+        b_means = [np.mean(rng.choice(arr, size=M, replace=True)) for _ in range(1000)]
+        return [round(float(np.percentile(b_means, 2.5)), 4), round(float(np.percentile(b_means, 97.5)), 4)]
+
+    # S2 Paired Differences
+    d_auc_prior = np.array(aucs_s2_model) - np.array(aucs_s2_prior)
+    d_ndcg_prior = np.array(ndcgs_s2_model) - np.array(ndcgs_s2_prior)
+    d_auc_res = np.array(aucs_s2_model) - np.array(aucs_s2_res_model)
+    d_ndcg_res = np.array(ndcgs_s2_model) - np.array(ndcgs_s2_res_model)
+
+    s1_ranking = {
+        "num_eligible_jds": len(eligible_jds),
+        "avg_candidates_per_jd": round(float(np.mean(candidate_counts)), 1),
+        "protocol_note": "Candidates originate from different fold models; indicative only.",
+        "baseline_explanation": "The JD-prior baseline is omitted because a JD prior is constant inside a JD, yielding AUC 0.5000 by definition; previous 0.2520 values were a leave-one-out fold artifact.",
+        "model_p_good_auc": {
+            "mean": round(float(np.mean(aucs_s1_model)), 4),
+            "ci95_of_mean": boot_ci_mean(aucs_s1_model),
+            "median": round(float(np.median(aucs_s1_model)), 4),
+            "iqr": [round(float(np.percentile(aucs_s1_model, 25)), 4), round(float(np.percentile(aucs_s1_model, 75)), 4)],
+        },
+        "random_auc": {
+            "mean": round(float(np.mean(aucs_s1_rand)), 4),
+            "ci95_of_mean": boot_ci_mean(aucs_s1_rand),
+            "median": round(float(np.median(aucs_s1_rand)), 4),
+            "iqr": [round(float(np.percentile(aucs_s1_rand, 25)), 4), round(float(np.percentile(aucs_s1_rand, 75)), 4)],
+        },
+        "model_ndcg_at_5": {
+            "mean": round(float(np.mean(ndcgs_s1_model)), 4),
+            "ci95_of_mean": boot_ci_mean(ndcgs_s1_model),
+            "median": round(float(np.median(ndcgs_s1_model)), 4),
+            "iqr": [round(float(np.percentile(ndcgs_s1_model, 25)), 4), round(float(np.percentile(ndcgs_s1_model, 75)), 4)],
+        },
+        "random_ndcg_at_5": {
+            "mean": round(float(np.mean(ndcgs_s1_rand)), 4),
+            "ci95_of_mean": boot_ci_mean(ndcgs_s1_rand),
+            "median": round(float(np.median(ndcgs_s1_rand)), 4),
+            "iqr": [round(float(np.percentile(ndcgs_s1_rand, 25)), 4), round(float(np.percentile(ndcgs_s1_rand, 75)), 4)],
+        },
+    }
+
+    s2_ranking = {
+        "num_eligible_jds": len(eligible_jds),
+        "avg_candidates_per_jd": round(float(np.mean(candidate_counts)), 1),
+        "protocol_note": "Single model per JD evaluated on held-out JDs.",
+        "model_p_good_auc": {
+            "mean": round(float(np.mean(aucs_s2_model)), 4),
+            "ci95_of_mean": boot_ci_mean(aucs_s2_model),
+            "median": round(float(np.median(aucs_s2_model)), 4),
+            "iqr": [round(float(np.percentile(aucs_s2_model, 25)), 4), round(float(np.percentile(aucs_s2_model, 75)), 4)],
+        },
+        "prior_auc": {
+            "mean": round(float(np.mean(aucs_s2_prior)), 4),
+            "ci95_of_mean": boot_ci_mean(aucs_s2_prior),
+            "median": round(float(np.median(aucs_s2_prior)), 4),
+            "iqr": [round(float(np.percentile(aucs_s2_prior, 25)), 4), round(float(np.percentile(aucs_s2_prior, 75)), 4)],
+        },
+        "resume_only_model_auc": {
+            "mean": round(float(np.mean(aucs_s2_res_model)), 4),
+            "ci95_of_mean": boot_ci_mean(aucs_s2_res_model),
+            "median": round(float(np.median(aucs_s2_res_model)), 4),
+            "iqr": [round(float(np.percentile(aucs_s2_res_model, 25)), 4), round(float(np.percentile(aucs_s2_res_model, 75)), 4)],
+        },
+        "random_auc": {
+            "mean": round(float(np.mean(aucs_s2_rand)), 4),
+            "ci95_of_mean": boot_ci_mean(aucs_s2_rand),
+            "median": round(float(np.median(aucs_s2_rand)), 4),
+            "iqr": [round(float(np.percentile(aucs_s2_rand, 25)), 4), round(float(np.percentile(aucs_s2_rand, 75)), 4)],
+        },
+        "delta_vs_resume_prior_auc": {
+            "mean": round(float(np.mean(d_auc_prior)), 4),
+            "ci95_of_mean": boot_ci_mean(d_auc_prior),
+        },
+        "delta_vs_resume_only_model_auc": {
+            "mean": round(float(np.mean(d_auc_res)), 4),
+            "ci95_of_mean": boot_ci_mean(d_auc_res),
+        },
+        "model_ndcg_at_5": {
+            "mean": round(float(np.mean(ndcgs_s2_model)), 4),
+            "ci95_of_mean": boot_ci_mean(ndcgs_s2_model),
+            "median": round(float(np.median(ndcgs_s2_model)), 4),
+            "iqr": [round(float(np.percentile(ndcgs_s2_model, 25)), 4), round(float(np.percentile(ndcgs_s2_model, 75)), 4)],
+        },
+        "prior_ndcg_at_5": {
+            "mean": round(float(np.mean(ndcgs_s2_prior)), 4),
+            "ci95_of_mean": boot_ci_mean(ndcgs_s2_prior),
+            "median": round(float(np.median(ndcgs_s2_prior)), 4),
+            "iqr": [round(float(np.percentile(ndcgs_s2_prior, 25)), 4), round(float(np.percentile(ndcgs_s2_prior, 75)), 4)],
+        },
+        "resume_only_model_ndcg_at_5": {
+            "mean": round(float(np.mean(ndcgs_s2_res_model)), 4),
+            "ci95_of_mean": boot_ci_mean(ndcgs_s2_res_model),
+            "median": round(float(np.median(ndcgs_s2_res_model)), 4),
+            "iqr": [round(float(np.percentile(ndcgs_s2_res_model, 25)), 4), round(float(np.percentile(ndcgs_s2_res_model, 75)), 4)],
+        },
+        "random_ndcg_at_5": {
+            "mean": round(float(np.mean(ndcgs_s2_rand)), 4),
+            "ci95_of_mean": boot_ci_mean(ndcgs_s2_rand),
+            "median": round(float(np.median(ndcgs_s2_rand)), 4),
+            "iqr": [round(float(np.percentile(ndcgs_s2_rand, 25)), 4), round(float(np.percentile(ndcgs_s2_rand, 75)), 4)],
+        },
+        "delta_vs_resume_prior_ndcg_at_5": {
+            "mean": round(float(np.mean(d_ndcg_prior)), 4),
+            "ci95_of_mean": boot_ci_mean(d_ndcg_prior),
+        },
+        "delta_vs_resume_only_model_ndcg_at_5": {
+            "mean": round(float(np.mean(d_ndcg_res)), 4),
+            "ci95_of_mean": boot_ci_mean(d_ndcg_res),
+        },
+    }
 
     # -----------------------------------------------------------------
-    # Part 5: Calibration & Temperature Scaling
+    # Part 5: Nested Calibration & Temperature Scaling
     # -----------------------------------------------------------------
-    print("\n--- Step 2e: Calibration and Temperature Scaling ---", flush=True)
+    print("\n--- Step 2e: Nested Calibration and Temperature Scaling ---", flush=True)
     ece_s1_raw, s1_bins = compute_ece(s1_oof_probs, y)
     ece_s2_raw, s2_bins = compute_ece(s2_oof_probs, y)
 
@@ -477,10 +564,15 @@ def main():
 
     ece_s2_cal, s2_cal_bins = compute_ece(cal_s2_probs, y)
 
+    s1_med_temp = float(np.median(s1_temperatures))
+    s2_med_temp = float(np.median(s2_temperatures))
+
     calibration_results = {
         "S1_cold_resume": {
             "raw_ece": round(ece_s1_raw, 4),
             "calibrated_ece": round(ece_s1_cal, 4),
+            "outer_temperatures": [round(float(t), 4) for t in s1_temperatures],
+            "median_temperature": round(s1_med_temp, 2),
             "mean_temperature": round(float(np.mean(s1_temperatures)), 2),
             "delta_ece": round(float(ece_s1_cal - ece_s1_raw), 4),
             "reliability_table_raw": s1_bins,
@@ -488,17 +580,39 @@ def main():
         "S2_cold_jd": {
             "raw_ece": round(ece_s2_raw, 4),
             "calibrated_ece": round(ece_s2_cal, 4),
+            "outer_temperatures": [round(float(t), 4) for t in s2_temperatures],
+            "median_temperature": round(s2_med_temp, 2),
             "mean_temperature": round(float(np.mean(s2_temperatures)), 2),
+            "serving_default_temperature": round(s2_med_temp, 2),
             "delta_ece": round(float(ece_s2_cal - ece_s2_raw), 4),
             "reliability_table_raw": s2_bins,
         },
         "recommendation": (
-            "Calibrated probabilities are strongly recommended. Temperature scaling reduces ECE "
-            f"on S1 from {ece_s1_raw:.4f} to {ece_s1_cal:.4f} (optimal T={np.mean(s1_temperatures):.2f}) and "
-            f"on S2 from {ece_s2_raw:.4f} to {ece_s2_cal:.4f} (optimal T={np.mean(s2_temperatures):.2f}), "
+            "Calibrated probabilities are strongly recommended. Nested temperature scaling reduces ECE "
+            f"on S1 from {ece_s1_raw:.4f} to {ece_s1_cal:.4f} (median T={s1_med_temp:.2f}) and "
+            f"on S2 from {ece_s2_raw:.4f} to {ece_s2_cal:.4f} (median T={s2_med_temp:.2f}), "
             "aligning confidence with empirical accuracy for recruiter decisions."
         )
     }
+
+    # Synchronize models/c5_lightgbm_final_meta.json
+    meta_path = PROJECT_ROOT / "models" / "c5_lightgbm_final_meta.json"
+    if meta_path.exists():
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+        meta["calibration"] = {
+            "method": "Nested Temperature Scaling (GroupKFold)",
+            "optimal_temperature_s1": round(s1_med_temp, 4),
+            "optimal_temperature_s2": round(s2_med_temp, 4),
+            "serving_default_temperature": round(s2_med_temp, 2),
+            "s1_ece_uncalibrated": round(ece_s1_raw, 4),
+            "s1_ece_calibrated": round(ece_s1_cal, 4),
+            "s2_ece_uncalibrated": round(ece_s2_raw, 4),
+            "s2_ece_calibrated": round(ece_s2_cal, 4),
+        }
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2)
+        print(f"[OK] Synchronized {meta_path} calibration fields", flush=True)
 
     # -----------------------------------------------------------------
     # Part 6: Cross-Encoder Sequence Length and Truncation Analysis
@@ -620,32 +734,40 @@ Evaluating binary separation between **Good Fit** (relevance 2) and **No Fit** (
 
 ## 4. Within-Job Description Ranking Performance
 
-Evaluated on eligible JDs ($\ge 5$ candidates containing at least one Good Fit and at least one No Fit, total 137 eligible JDs). Primary evaluation is **S2 (Cold JD)** where a single fold model scores all candidates for a held-out JD. In **S1 (Cold Resume)**, candidates originate from different fold models, so S1 metrics are strictly indicative.
+Evaluated on eligible JDs ($\ge 5$ candidates containing at least one Good Fit and at least one No Fit, total {rnk['S2_cold_jd']['num_eligible_jds']} eligible JDs). Primary evaluation is **S2 (Cold JD)** where a single fold model scores all candidates for a held-out JD. In **S1 (Cold Resume)**, candidates originate from different fold models, so S1 metrics are strictly indicative.
 
 ### Primary Benchmark: S2 (Cold JD) — Single Model Per JD
-| Metric | Model $P(\\text{{Good Fit}})$ | Resume-Prior Baseline | Random Baseline |
-| :--- | :---: | :---: | :---: |
-| **Mean AUC (95% CI of Mean)** | **{rnk['S2_cold_jd']['model_p_good_auc']['mean']:.4f}** [{rnk['S2_cold_jd']['model_p_good_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['model_p_good_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['prior_auc']['mean']:.4f} [{rnk['S2_cold_jd']['prior_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['prior_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['random_auc']['mean']:.4f} [{rnk['S2_cold_jd']['random_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['random_auc']['ci95_of_mean'][1]:.4f}] |
-| **Median AUC (IQR [Q25, Q75])** | **{rnk['S2_cold_jd']['model_p_good_auc']['median']:.4f}** [{rnk['S2_cold_jd']['model_p_good_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['model_p_good_auc']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['prior_auc']['median']:.4f} [{rnk['S2_cold_jd']['prior_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['prior_auc']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['random_auc']['median']:.4f} [{rnk['S2_cold_jd']['random_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['random_auc']['iqr'][1]:.4f}] |
-| **Mean NDCG@5 (95% CI of Mean)** | **{rnk['S2_cold_jd']['model_ndcg_at_5']['mean']:.4f}** [{rnk['S2_cold_jd']['model_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['model_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['prior_ndcg_at_5']['mean']:.4f} [{rnk['S2_cold_jd']['prior_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['prior_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['random_ndcg_at_5']['mean']:.4f} [{rnk['S2_cold_jd']['random_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['random_ndcg_at_5']['ci95_of_mean'][1]:.4f}] |
-| **Median NDCG@5 (IQR [Q25, Q75])** | **{rnk['S2_cold_jd']['model_ndcg_at_5']['median']:.4f}** [{rnk['S2_cold_jd']['model_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['model_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['prior_ndcg_at_5']['median']:.4f} [{rnk['S2_cold_jd']['prior_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['prior_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['random_ndcg_at_5']['median']:.4f} [{rnk['S2_cold_jd']['random_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['random_ndcg_at_5']['iqr'][1]:.4f}] |
+| Metric | Full Model $P(\\text{{Good Fit}})$ | Resume-Only Model | Resume-Prior Baseline | Random Baseline |
+| :--- | :---: | :---: | :---: | :---: |
+| **Mean AUC (95% CI of Mean)** | **{rnk['S2_cold_jd']['model_p_good_auc']['mean']:.4f}** [{rnk['S2_cold_jd']['model_p_good_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['model_p_good_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['resume_only_model_auc']['mean']:.4f} [{rnk['S2_cold_jd']['resume_only_model_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['resume_only_model_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['prior_auc']['mean']:.4f} [{rnk['S2_cold_jd']['prior_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['prior_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['random_auc']['mean']:.4f} [{rnk['S2_cold_jd']['random_auc']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['random_auc']['ci95_of_mean'][1]:.4f}] |
+| **Median AUC (IQR [Q25, Q75])** | **{rnk['S2_cold_jd']['model_p_good_auc']['median']:.4f}** [{rnk['S2_cold_jd']['model_p_good_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['model_p_good_auc']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['resume_only_model_auc']['median']:.4f} [{rnk['S2_cold_jd']['resume_only_model_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['resume_only_model_auc']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['prior_auc']['median']:.4f} [{rnk['S2_cold_jd']['prior_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['prior_auc']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['random_auc']['median']:.4f} [{rnk['S2_cold_jd']['random_auc']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['random_auc']['iqr'][1]:.4f}] |
+| **Mean NDCG@5 (95% CI of Mean)** | **{rnk['S2_cold_jd']['model_ndcg_at_5']['mean']:.4f}** [{rnk['S2_cold_jd']['model_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['model_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['resume_only_model_ndcg_at_5']['mean']:.4f} [{rnk['S2_cold_jd']['resume_only_model_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['resume_only_model_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['prior_ndcg_at_5']['mean']:.4f} [{rnk['S2_cold_jd']['prior_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['prior_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S2_cold_jd']['random_ndcg_at_5']['mean']:.4f} [{rnk['S2_cold_jd']['random_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S2_cold_jd']['random_ndcg_at_5']['ci95_of_mean'][1]:.4f}] |
+| **Median NDCG@5 (IQR [Q25, Q75])** | **{rnk['S2_cold_jd']['model_ndcg_at_5']['median']:.4f}** [{rnk['S2_cold_jd']['model_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['model_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['resume_only_model_ndcg_at_5']['median']:.4f} [{rnk['S2_cold_jd']['resume_only_model_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['resume_only_model_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['prior_ndcg_at_5']['median']:.4f} [{rnk['S2_cold_jd']['prior_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['prior_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S2_cold_jd']['random_ndcg_at_5']['median']:.4f} [{rnk['S2_cold_jd']['random_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S2_cold_jd']['random_ndcg_at_5']['iqr'][1]:.4f}] |
+
+#### Paired Differences on S2 (Within-JD Bootstrap CIs)
+- **Model vs Resume Prior:** $\\Delta$ AUC = **+{rnk['S2_cold_jd']['delta_vs_resume_prior_auc']['mean']:.4f}** [{rnk['S2_cold_jd']['delta_vs_resume_prior_auc']['ci95_of_mean'][0]:+.4f}, {rnk['S2_cold_jd']['delta_vs_resume_prior_auc']['ci95_of_mean'][1]:+.4f}], $\\Delta$ NDCG@5 = **+{rnk['S2_cold_jd']['delta_vs_resume_prior_ndcg_at_5']['mean']:.4f}** [{rnk['S2_cold_jd']['delta_vs_resume_prior_ndcg_at_5']['ci95_of_mean'][0]:+.4f}, {rnk['S2_cold_jd']['delta_vs_resume_prior_ndcg_at_5']['ci95_of_mean'][1]:+.4f}].
+- **Full Model vs Resume-Only Model:** $\\Delta$ AUC = **+{rnk['S2_cold_jd']['delta_vs_resume_only_model_auc']['mean']:.4f}** [{rnk['S2_cold_jd']['delta_vs_resume_only_model_auc']['ci95_of_mean'][0]:+.4f}, {rnk['S2_cold_jd']['delta_vs_resume_only_model_auc']['ci95_of_mean'][1]:+.4f}], $\\Delta$ NDCG@5 = **+{rnk['S2_cold_jd']['delta_vs_resume_only_model_ndcg_at_5']['mean']:.4f}** [{rnk['S2_cold_jd']['delta_vs_resume_only_model_ndcg_at_5']['ci95_of_mean'][0]:+.4f}, {rnk['S2_cold_jd']['delta_vs_resume_only_model_ndcg_at_5']['ci95_of_mean'][1]:+.4f}].
+
+*Analysis:* Because both paired 95% confidence intervals strictly exclude zero, the full interaction model significantly outperforms both the empirical resume prior and the resume-only embedding model, demonstrating genuine resume-JD matching signal beyond candidate-level quality.
 
 ### Indicative Benchmark: S1 (Cold Resume) — Multi-Model Aggregation
-| Metric | Model $P(\\text{{Good Fit}})$ | JD-Prior Baseline | Random Baseline |
-| :--- | :---: | :---: | :---: |
-| **Mean AUC (95% CI of Mean)** | **{rnk['S1_cold_resume']['model_p_good_auc']['mean']:.4f}** [{rnk['S1_cold_resume']['model_p_good_auc']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['model_p_good_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['prior_auc']['mean']:.4f} [{rnk['S1_cold_resume']['prior_auc']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['prior_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['random_auc']['mean']:.4f} [{rnk['S1_cold_resume']['random_auc']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['random_auc']['ci95_of_mean'][1]:.4f}] |
-| **Median AUC (IQR [Q25, Q75])** | **{rnk['S1_cold_resume']['model_p_good_auc']['median']:.4f}** [{rnk['S1_cold_resume']['model_p_good_auc']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['model_p_good_auc']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['prior_auc']['median']:.4f} [{rnk['S1_cold_resume']['prior_auc']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['prior_auc']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['random_auc']['median']:.4f} [{rnk['S1_cold_resume']['random_auc']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['random_auc']['iqr'][1]:.4f}] |
-| **Mean NDCG@5 (95% CI of Mean)** | **{rnk['S1_cold_resume']['model_ndcg_at_5']['mean']:.4f}** [{rnk['S1_cold_resume']['model_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['model_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['prior_ndcg_at_5']['mean']:.4f} [{rnk['S1_cold_resume']['prior_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['prior_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['random_ndcg_at_5']['mean']:.4f} [{rnk['S1_cold_resume']['random_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['random_ndcg_at_5']['ci95_of_mean'][1]:.4f}] |
-| **Median NDCG@5 (IQR [Q25, Q75])** | **{rnk['S1_cold_resume']['model_ndcg_at_5']['median']:.4f}** [{rnk['S1_cold_resume']['model_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['model_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['prior_ndcg_at_5']['median']:.4f} [{rnk['S1_cold_resume']['prior_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['prior_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['random_ndcg_at_5']['median']:.4f} [{rnk['S1_cold_resume']['random_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['random_ndcg_at_5']['iqr'][1]:.4f}] |
+| Metric | Model $P(\\text{{Good Fit}})$ | Random Baseline |
+| :--- | :---: | :---: |
+| **Mean AUC (95% CI of Mean)** | **{rnk['S1_cold_resume']['model_p_good_auc']['mean']:.4f}** [{rnk['S1_cold_resume']['model_p_good_auc']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['model_p_good_auc']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['random_auc']['mean']:.4f} [{rnk['S1_cold_resume']['random_auc']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['random_auc']['ci95_of_mean'][1]:.4f}] |
+| **Median AUC (IQR [Q25, Q75])** | **{rnk['S1_cold_resume']['model_p_good_auc']['median']:.4f}** [{rnk['S1_cold_resume']['model_p_good_auc']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['model_p_good_auc']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['random_auc']['median']:.4f} [{rnk['S1_cold_resume']['random_auc']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['random_auc']['iqr'][1]:.4f}] |
+| **Mean NDCG@5 (95% CI of Mean)** | **{rnk['S1_cold_resume']['model_ndcg_at_5']['mean']:.4f}** [{rnk['S1_cold_resume']['model_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['model_ndcg_at_5']['ci95_of_mean'][1]:.4f}] | {rnk['S1_cold_resume']['random_ndcg_at_5']['mean']:.4f} [{rnk['S1_cold_resume']['random_ndcg_at_5']['ci95_of_mean'][0]:.4f}, {rnk['S1_cold_resume']['random_ndcg_at_5']['ci95_of_mean'][1]:.4f}] |
+| **Median NDCG@5 (IQR [Q25, Q75])** | **{rnk['S1_cold_resume']['model_ndcg_at_5']['median']:.4f}** [{rnk['S1_cold_resume']['model_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['model_ndcg_at_5']['iqr'][1]:.4f}] | {rnk['S1_cold_resume']['random_ndcg_at_5']['median']:.4f} [{rnk['S1_cold_resume']['random_ndcg_at_5']['iqr'][0]:.4f}, {rnk['S1_cold_resume']['random_ndcg_at_5']['iqr'][1]:.4f}] |
+
+*Note on S1 Baseline:* {rnk['S1_cold_resume']['baseline_explanation']}
 
 ---
 
-## 5. Calibration & Temperature Scaling Analysis
+## 5. Calibration & Temperature Scaling Analysis (Nested GroupKFold Evaluation)
 
-| Generalization Scenario | Raw Expected Calibration Error (ECE) | Calibrated ECE (Temperature Scaled) | Optimal Temperature ($T$) | Calibration Effect |
+| Generalization Scenario | Raw Expected Calibration Error (ECE) | Calibrated ECE (Temperature Scaled) | Median Temperature ($T$) | Calibration Effect |
 | :--- | :---: | :---: | :---: | :---: |
-| **S1 (Cold Resume)** | **{cal['S1_cold_resume']['raw_ece']:.4f}** | **{cal['S1_cold_resume']['calibrated_ece']:.4f}** | {cal['S1_cold_resume']['mean_temperature']:.2f} | **{cal['S1_cold_resume']['delta_ece']:+.4f} ECE** |
-| **S2 (Cold JD)** | **{cal['S2_cold_jd']['raw_ece']:.4f}** | **{cal['S2_cold_jd']['calibrated_ece']:.4f}** | {cal['S2_cold_jd']['mean_temperature']:.2f} | **{cal['S2_cold_jd']['delta_ece']:+.4f} ECE** |
+| **S1 (Cold Resume)** | **{cal['S1_cold_resume']['raw_ece']:.4f}** | **{cal['S1_cold_resume']['calibrated_ece']:.4f}** | {cal['S1_cold_resume']['median_temperature']:.2f} | **{cal['S1_cold_resume']['delta_ece']:+.4f} ECE** |
+| **S2 (Cold JD)** | **{cal['S2_cold_jd']['raw_ece']:.4f}** | **{cal['S2_cold_jd']['calibrated_ece']:.4f}** | {cal['S2_cold_jd']['median_temperature']:.2f} | **{cal['S2_cold_jd']['delta_ece']:+.4f} ECE** |
 
 > **Operational Recommendation**: {cal['recommendation']}
 

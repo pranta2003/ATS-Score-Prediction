@@ -20,10 +20,10 @@ The table below reflects the latest workflow run executed for each open pull req
 | **#24** | `docs/final-reconciliation` | `42340099413` | 2026-11-07T04:49:26Z | **success** | Legacy (`python-app.yml`, Python 3.10) |
 | **#25** | `fix/kaggle-runs` | `42368352279` | 2026-11-07T11:28:59Z | **success** | Legacy (`python-app.yml`, Python 3.10) |
 | **#26** | `fix/packet-provenance` | `42368711788` | 2026-11-07T11:33:57Z | **success** | Legacy (`python-app.yml`, Python 3.10) |
-| **#27** | `feat/app-final-model` | `42479301096` | 2026-11-08T12:14:29Z | **success** | Modern (`python-app.yml`, Python 3.13, `-m "not heavy"`) |
+| **#27** | `feat/app-final-model` | `42487115669` | 2026-11-08T13:53:42Z | **success** | Modern (`python-app.yml`, Python 3.13, `-m "not heavy"`) |
 | **#28** | `fix/rubric-validation` | `42369831407` | 2026-11-07T11:50:00Z | **success** | Legacy (`python-app.yml`, Python 3.10) |
 | **#29** | `docs/paper-outline-fix` | `42475415783` | 2026-11-08T11:21:50Z | **success** | Legacy (`python-app.yml`, Python 3.10) |
-| **#30** | `release/final-package` | `42479606507` | 2026-11-08T12:18:18Z | **success** | Modern (`python-app.yml`, Python 3.13, `-m "not heavy"`) |
+| **#30** | `release/final-package` | `42487088817` | 2026-11-08T13:53:22Z | **success** | Modern (`python-app.yml`, Python 3.13, `-m "not heavy"`) |
 
 ---
 

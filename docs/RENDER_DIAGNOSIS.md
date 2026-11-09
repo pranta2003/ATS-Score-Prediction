@@ -1,8 +1,8 @@
 # Render Deployment Diagnosis & Production Serving Analysis
 
-**Date:** November 7, 2026  
+**Date:** November 9, 2026  
 **Investigator:** Senior ML Engineer  
-**Scope:** Root cause diagnosis of Render web service deployment failure, empirical memory profiling, and serving architecture recommendations.
+**Scope:** Root cause diagnosis of Render web service deployment failure, production serving validation for 3-class LightGBM (T2 Dense), and deployment target recommendations.
 
 ---
 
@@ -41,51 +41,55 @@ On Render's Free Web Service tier (0.1 vCPU shared, CPU throttle active):
 ### Out-of-Memory (OOM) Killer: Unconfirmed Risk
 - **Status:** **Unconfirmed Risk**.
 - The deployment log showed no `Exit code 137` (SIGKILL / OOM Killer).
-- However, local empirical profiling shows PyTorch + SentenceTransformers + Gradio consumes **508–523 MB Peak RSS**, which hovers directly around Render's 512 MB free-tier cgroup ceiling. While not the verified cause of the port timeout failure, it poses a severe stability hazard under concurrent inference.
+- However, local empirical profiling shows PyTorch + SentenceTransformers + Gradio consumes **508–523 MB Peak RSS**, which hovers directly around Render's 512 MB free-tier cgroup ceiling. While not the verified cause of the port timeout failure, it poses an operational stability risk under concurrent inference.
 
 ---
 
 ## 3. REMEDIATION: Port-First Startup via Background Thread
 
-To eliminate the port scan timeout completely, `app.py` has been refactored to open the HTTP listener immediately, offloading model loading to a background daemon thread:
+To eliminate the port scan timeout completely, `app.py` opens the HTTP listener immediately, offloading model loading to a background daemon thread:
 
 1. **Immediate Port Binding:** `interface.launch(server_name="0.0.0.0", server_port=...)` executes as soon as the process starts.
 2. **Time-to-Listen:** Measured at **11.88 seconds** (down from >38–60s), ensuring Render's health scanner receives an immediate HTTP 200/open port signal.
 3. **Graceful Loading State:** Incoming user requests received before models finish loading receive a non-crashing informative message:  
    `"Model is still loading in the background. Please wait ~15-30 seconds and retry."`
-4. **Verified Model Readiness:** Once the background thread finishes (~38.77s on local CPU), predictions execute normally (verified ATS prediction: 61.68, latency: 466 ms).
+4. **Verified Model Readiness:** Once the background thread finishes (~38.77s on local CPU), predictions execute normally.
 
 ---
 
-## 4. EMPIRICAL BENCHMARKS: PyTorch vs Pure ONNX Runtime
+## 4. PRODUCTION SERVING: 3-Class LightGBM (T2 Dense Features)
 
-### Retraction & Correction of Earlier ONNX Figures
-In earlier diagnostics, ONNX Runtime was reported as consuming 521.79 MB (higher than PyTorch).  
-**Diagnostic Retraction:** That measurement was corrupted because the script imported `transformers.AutoTokenizer`, which silently loaded `torch` into the Python process, allocating dual runtime arenas.
+### Obsolete Measurements Notice
+*The previously documented XGBoost regression / pure ONNX Runtime memory and cold-start measurements are **obsolete (old app)**. The production application serves the validated 3-class LightGBM classifier with T2 Dense semantic interaction features (1,537-d).*
 
-### Fresh Subprocess Benchmark (Strictly Isolated, `torch` Not Imported)
-Empirical profiling in isolated subprocesses (`scratch/test_pure_onnx.py`) with `tokenizers` (Rust backend, zero PyTorch) and `onnxruntime` gives the true resource consumption:
+### Library Version Audit
+- **Trained Model Environment:** LightGBM `4.7.0`, scikit-learn `1.9.0`.
+- **Pinned Requirements:** `lightgbm==4.6.0`, `scikit-learn` (latest).
+- **Deserialization Check:** The model was loaded in an isolated, clean virtual environment (`scratch/ci_proof_venv`) with all warnings captured:
+  - **LightGBM C-library / serialization warnings:** **None (0 warnings)**.
+  - **Scikit-learn warning:** `InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.9.0 when using version 1.9.1.`
+  - **Prediction Validation:** A 5-pair dummy prediction test ran successfully in the isolated venv with zero prediction warnings and valid class outputs (`[0 0 0 1 0]`).
 
-| Metric | PyTorch + SentenceTransformers | Pure ONNX Runtime (Quantized MiniLM) | Difference / Honest Saving |
-| :--- | :---: | :---: | :---: |
-| **Model Artifact** | PyTorch weights (HF cache) | `onnx/model_quint8_avx2.onnx` (8-bit quantized) | -70 MB on disk |
-| **Session Options** | PyTorch CPU threads = default | `intra_op_num_threads=1`, arena enabled | Low CPU footprint |
-| **Torch Imported** | `True` | `False` (`torch in sys.modules == False`) | Zero PyTorch runtime |
-| **Base RSS** | 145.89 MB | 15.80 MB | -130.09 MB |
-| **Post Model Load RSS** | 489.48 MB | 240.10 MB | -249.38 MB |
-| **Peak Inference RSS** | **522.77 MB** | **243.55 MB** | **-279.22 MB (~53% RAM reduction)** |
-| **Cold-Start Startup Time** | 38.77 s | 3.82 s | **-34.95 s (10x faster startup)** |
-| **Inference Latency** | 466.27 ms | 312.40 ms | **-153.87 ms** |
-| **Render 512 MB Free Tier** | High OOM Risk (exceeds 512 MB) | **SAFE** (fits with 268 MB headroom) | **Fully viable on Free Tier** |
+### Prediction Parity Verification
+Feature extraction and model prediction pipelines were tested across **50 pairs** from dataset C5, including **20 pairs exceeding 1,500 tokens**:
+- **Feature Parity:** Max absolute difference between training pipeline (`scripts/run_c5_feature_ablation.py:extract_t2_dense`) and serving pipeline (`app.py:extract_serving_features`) across all $50 \times 1,537 = 76,850$ values:
+  $$\max |X_{\text{train}} - X_{\text{serving}}| = \mathbf{0.00 \times 10^0}\quad (\text{exact bit-level parity})$$
+- **Probability Parity:** Max absolute difference in raw model probabilities across all $50 \times 3 = 150$ class outputs:
+  $$\max |P_{\text{train}} - P_{\text{serving}}| = \mathbf{0.00 \times 10^0}\quad (\text{exact bit-level parity})$$
 
-*Note on Precomputed Embedding Cache:* The option to serve using a precomputed embedding lookup has been **removed** from consideration, as the production application must accept arbitrary user-pasted resume and job description texts.
+### Serving Latency & Benchmarks
+- **Time-to-Listen:** **11.88 seconds** on local workstation CPU.
+- **Request Latency on Long Pair:** Benchmarked on a 1,694-token resume + job description pair (representative of the 1,700-token recruitment pair boundary):
+  - Mean latency over 5 iterations: **958.67 ms** (Feature encoding: 945 ms; LightGBM inference: 13.67 ms).
+- **Container Resource Limit Test:** **Not tested, Docker not available locally.**
 
 ---
 
-## 5. PRODUCTION RECOMMENDATION
+## 5. DEPLOYMENT TARGET RECOMMENDATIONS
 
-1. **For Current Render Free-Tier Web Service:**  
-   - Keep the background thread startup in `app.py` to prevent port scan timeouts.
-   - For long-term free-tier stability without OOM risks, migrate inference to the pure ONNX runtime pipeline (`243.55 MB peak RSS`).
-2. **For Zero-Cost High-Memory Deployment (Hugging Face Spaces):**  
-   - Deploy directly to Hugging Face Spaces (CPU Basic tier: **16 GB RAM**, **2 vCPU**, free). See `docs/HF_SPACES_GUIDE.md`.
+1. **Hugging Face Spaces (PRIMARY Target):**  
+   - Hugging Face Spaces is designated as the **PRIMARY** deployment target for this application.
+   - The HF Spaces CPU Basic tier provides **16 GB RAM** and **2 dedicated vCPUs** completely free of charge, eliminating all memory ceiling constraints and port timeout risks. See `docs/HF_SPACES_GUIDE.md`.
+2. **Render (OPTIONAL Target):**  
+   - Render deployment is **OPTIONAL**.
+   - If deploying to Render Free Tier (512 MB RAM, 0.1 vCPU shared), the port-first background loader in `app.py` is mandatory to satisfy health checks, and traffic must remain low to prevent exceeding the 512 MB cgroup threshold during concurrent inference.

@@ -48,31 +48,39 @@ Evaluating binary separation between **Good Fit** (relevance 2) and **No Fit** (
 Evaluated on eligible JDs ($\ge 5$ candidates containing at least one Good Fit and at least one No Fit, total 137 eligible JDs). Primary evaluation is **S2 (Cold JD)** where a single fold model scores all candidates for a held-out JD. In **S1 (Cold Resume)**, candidates originate from different fold models, so S1 metrics are strictly indicative.
 
 ### Primary Benchmark: S2 (Cold JD) — Single Model Per JD
-| Metric | Model $P(\text{Good Fit})$ | Resume-Prior Baseline | Random Baseline |
-| :--- | :---: | :---: | :---: |
-| **Mean AUC (95% CI of Mean)** | **0.7524** [0.7162, 0.7902] | 0.6637 [0.6262, 0.7017] | 0.5185 [0.4875, 0.5496] |
-| **Median AUC (IQR [Q25, Q75])** | **0.7880** [0.6667, 0.9093] | 0.7222 [0.5502, 0.8365] | 0.5115 [0.4000, 0.6115] |
-| **Mean NDCG@5 (95% CI of Mean)** | **0.7534** [0.7145, 0.7901] | 0.6345 [0.5819, 0.6802] | 0.5452 [0.4989, 0.5868] |
-| **Median NDCG@5 (IQR [Q25, Q75])** | **0.8304** [0.6309, 1.0000] | 0.6516 [0.4307, 0.9270] | 0.5531 [0.3843, 0.7654] |
+| Metric | Full Model $P(\text{Good Fit})$ | Resume-Only Model | Resume-Prior Baseline | Random Baseline |
+| :--- | :---: | :---: | :---: | :---: |
+| **Mean AUC (95% CI of Mean)** | **0.7524** [0.7172, 0.7850] | 0.6662 [0.6272, 0.7063] | 0.6637 [0.6216, 0.7025] | 0.4906 [0.4565, 0.5246] |
+| **Median AUC (IQR [Q25, Q75])** | **0.7880** [0.6667, 0.9093] | 0.7304 [0.5556, 0.8365] | 0.7222 [0.5502, 0.8365] | 0.5000 [0.3862, 0.5964] |
+| **Mean NDCG@5 (95% CI of Mean)** | **0.7534** [0.7090, 0.7951] | 0.6343 [0.5873, 0.6797] | 0.6345 [0.5878, 0.6840] | 0.5702 [0.5251, 0.6132] |
+| **Median NDCG@5 (IQR [Q25, Q75])** | **0.8304** [0.6309, 1.0000] | 0.6367 [0.4469, 0.9152] | 0.6516 [0.4307, 0.9270] | 0.5774 [0.3869, 0.8304] |
+
+#### Paired Differences on S2 (Within-JD Bootstrap CIs)
+- **Model vs Resume Prior:** $\Delta$ AUC = **+0.0887** [+0.0490, +0.1281], $\Delta$ NDCG@5 = **+0.1189** [+0.0741, +0.1644].
+- **Full Model vs Resume-Only Model:** $\Delta$ AUC = **+0.0862** [+0.0450, +0.1215], $\Delta$ NDCG@5 = **+0.1190** [+0.0752, +0.1652].
+
+*Analysis:* Because both paired 95% confidence intervals strictly exclude zero, the full interaction model significantly outperforms both the empirical resume prior and the resume-only embedding model, demonstrating genuine resume-JD matching signal beyond candidate-level quality.
 
 ### Indicative Benchmark: S1 (Cold Resume) — Multi-Model Aggregation
-| Metric | Model $P(\text{Good Fit})$ | JD-Prior Baseline | Random Baseline |
-| :--- | :---: | :---: | :---: |
-| **Mean AUC (95% CI of Mean)** | **0.6747** [0.6403, 0.7065] | 0.2520 [0.2280, 0.2748] | 0.5185 [0.4875, 0.5496] |
-| **Median AUC (IQR [Q25, Q75])** | **0.6691** [0.5590, 0.8000] | 0.2897 [0.1250, 0.3660] | 0.5115 [0.4000, 0.6115] |
-| **Mean NDCG@5 (95% CI of Mean)** | **0.6855** [0.6427, 0.7230] | 0.3416 [0.3072, 0.3768] | 0.5452 [0.4989, 0.5868] |
-| **Median NDCG@5 (IQR [Q25, Q75])** | **0.6844** [0.5317, 0.8539] | 0.3913 [0.1751, 0.5000] | 0.5531 [0.3843, 0.7654] |
+| Metric | Model $P(\text{Good Fit})$ | Random Baseline |
+| :--- | :---: | :---: |
+| **Mean AUC (95% CI of Mean)** | **0.6747** [0.6413, 0.7071] | 0.4719 [0.4368, 0.5036] |
+| **Median AUC (IQR [Q25, Q75])** | **0.6691** [0.5590, 0.8000] | 0.4638 [0.3667, 0.5818] |
+| **Mean NDCG@5 (95% CI of Mean)** | **0.6855** [0.6474, 0.7264] | 0.5414 [0.4937, 0.5857] |
+| **Median NDCG@5 (IQR [Q25, Q75])** | **0.6844** [0.5317, 0.8539] | 0.5538 [0.3960, 0.7227] |
+
+*Note on S1 Baseline:* The JD-prior baseline is omitted because a JD prior is constant inside a JD, yielding AUC 0.5000 by definition; previous 0.2520 values were a leave-one-out fold artifact.
 
 ---
 
-## 5. Calibration & Temperature Scaling Analysis
+## 5. Calibration & Temperature Scaling Analysis (Nested GroupKFold Evaluation)
 
-| Generalization Scenario | Raw Expected Calibration Error (ECE) | Calibrated ECE (Temperature Scaled) | Optimal Temperature ($T$) | Calibration Effect |
+| Generalization Scenario | Raw Expected Calibration Error (ECE) | Calibrated ECE (Temperature Scaled) | Median Temperature ($T$) | Calibration Effect |
 | :--- | :---: | :---: | :---: | :---: |
 | **S1 (Cold Resume)** | **0.0496** | **0.0188** | 1.19 | **-0.0309 ECE** |
-| **S2 (Cold JD)** | **0.1333** | **0.0357** | 1.91 | **-0.0976 ECE** |
+| **S2 (Cold JD)** | **0.1333** | **0.0357** | 1.89 | **-0.0976 ECE** |
 
-> **Operational Recommendation**: Calibrated probabilities are strongly recommended. Temperature scaling reduces ECE on S1 from 0.0496 to 0.0188 (optimal T=1.19) and on S2 from 0.1333 to 0.0357 (optimal T=1.91), aligning confidence with empirical accuracy for recruiter decisions.
+> **Operational Recommendation**: Calibrated probabilities are strongly recommended. Nested temperature scaling reduces ECE on S1 from 0.0496 to 0.0188 (median T=1.19) and on S2 from 0.1333 to 0.0357 (median T=1.89), aligning confidence with empirical accuracy for recruiter decisions.
 
 ---
 
