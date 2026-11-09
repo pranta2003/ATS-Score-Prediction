@@ -1,0 +1,46 @@
+{
+  "model_type": "LightGBMClassifier",
+  "library_version": "4.7.0",
+  "dataset": "cnamuangtoun/resume-job-description-fit",
+  "training_samples": 8000,
+  "feature_tier": "T2_Dense",
+  "feature_dim": 1537,
+  "feature_definition": "[u (384), v (384), |u-v| (384), u*v (384), cos(u,v) (1)]",
+  "embedding_backbone": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dim": 384,
+  "classes": [
+    "No Fit",
+    "Potential Fit",
+    "Good Fit"
+  ],
+  "class_mapping": {
+    "No Fit": 0,
+    "Potential Fit": 1,
+    "Good Fit": 2
+  },
+  "hyperparameters": {
+    "objective": "multiclass",
+    "num_class": 3,
+    "n_estimators": 300,
+    "max_depth": 6,
+    "num_leaves": 31,
+    "learning_rate": 0.05,
+    "random_state": 42,
+    "n_jobs": -1,
+    "verbose": -1
+  },
+  "calibration": {
+    "method": "Temperature Scaling",
+    "optimal_temperature_s1": 1.190887197178116,
+    "optimal_temperature_s2": 1.9112864744826241,
+    "serving_default_temperature": 1.91,
+    "s1_ece_uncalibrated": 0.049640057999640705,
+    "s1_ece_calibrated": 0.01853006503731012,
+    "s2_ece_uncalibrated": 0.13330182798579332,
+    "s2_ece_calibrated": 0.03532789652794599
+  },
+  "model_file": "c5_lightgbm_final.joblib",
+  "file_size_mb": 2.97,
+  "sha256": "d64df22ad8dfe82b99488ea9ad7b06b9f816a9ff72ab5012cad08efd81f4ff01",
+  "created_at": "2026-11-07 11:38:23 UTC"
+}

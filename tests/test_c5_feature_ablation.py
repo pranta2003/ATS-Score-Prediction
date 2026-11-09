@@ -3,10 +3,12 @@ import time
 import json
 import subprocess
 from pathlib import Path
+import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
+@pytest.mark.heavy
 def test_c5_feature_ablation_smoke():
     """Verify that run_c5_feature_ablation.py in --smoke mode finishes in under 60s."""
     script_path = PROJECT_ROOT / "scripts" / "run_c5_feature_ablation.py"

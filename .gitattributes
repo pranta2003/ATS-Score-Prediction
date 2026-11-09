@@ -1,0 +1,5 @@
+* text=auto
+*.json -text
+*.parquet binary
+*.joblib binary
+*.png binary
