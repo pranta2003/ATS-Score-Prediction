@@ -33,13 +33,16 @@ Every output artifact checked into the repository has been verified against its 
 | :--- | :--- | :---: | :--- |
 | `reports/probe_results.json` | `ats-probe-gpu` | 1,208 | `e9b8fea4bcff314270754d7af6a3540724febe389da45d626513b14e98791856` |
 | `.kaggle_kernels/probe_cpu_out/probe_results.json` | `ats-probe-cpu` | 1,124 | `03fb8f6e85407ef3012b925939d49382d419b9257714f83a98d87ca4d0b44dcf` |
-| `reports/j1_sweep_results.json` | `ats-c5-scen-mod-9dd67db7` | 6,533 | `dd0bf5107cf239c2ef09ab54d9c0b321f68197388483cd6e38eda4868649d0a9` |
-| `reports/c2_ablation_results.json` | `ats-c2-scen-mod-174278cf` | 3,021 | `e3e18fb036ed325ff3589aa185358ecf23d8773bff317ed8a6d273cfe2ee130f` |
-| `reports/cross_encoder_results.json` | `ats-c5-scen-mod-ec22929c` | 1,107 | `f5090f43a5537726d71ea526801db936e945294aad3e9da9e986bb2bd5b78f13` |
-| `reports/c5_feature_ablation_results.json` | `ats-c5-scen-lightgbm-068737a8` | 12,461 | `488ad07504f98686ac87d4a79f0e873b96f1c49bfb8c630d870456ce90b27cc3` |
-| `reports/ce_vs_bi_results.json` | `ats-c5-scen-mod-bd47431f` | 11,616 | `7c04f26c41cb497efb49d8b98032dba5fcbc21aa3e58ca12f12c48692f17c473` |
-| `results/leakage_comparison_results.json` | `ats-c5-leakage-comparison-cpu` | 1,732 | `db3104db9612577bf7f0a7a46e4d9915ee78d040e662f2eb4f1449bbcaeb38da` |
+| `reports/j1_sweep_results.json` | `ats-c5-scen-mod-9dd67db7` | 6,268 | `bf5bc4e51cbdae8b041bb2c2cbb062815d1d28c1ceace59b0f30563a8f8acd23` |
+| `reports/c2_ablation_results.json` | `ats-c2-scen-mod-174278cf` | 2,918 | `9bf1d024702dc96e737948593acdfda5411e88b4d6a22056ca808e4c6731db79` |
+| `reports/cross_encoder_results.json` | `ats-c5-scen-mod-ec22929c` | 1,068 | `bb2e29e60a7b386e5579a33786beddcae1bed7dbb5cda5ba220da67236d77fd1` |
+| `reports/c5_feature_ablation_results.json` | `ats-c5-scen-lightgbm-068737a8` | 12,029 | `6f6e5e04ae0ae54fa4bfd5af7d12062afd14ef3ae9192936224ff0394a33bd87` |
+| `reports/ce_vs_bi_results.json` | `ats-c5-scen-mod-bd47431f` | 11,228 | `0984af961436237cbc98c8f69a72729936a1c05162059ce6d497f6bd86a4e15e` |
+| `results/leakage_comparison_results.json` | `ats-c5-leakage-comparison-cpu` | 1,637 | `db3104db9612577bf7f0a7a46e4d9915ee78d040e662f2eb4f1449bbcaeb38da` |
 | `results/c5_leakage_oof_predictions.parquet` | `ats-c5-leakage-comparison-cpu` | 524,343 | `110417bf3db8b0e9872abc925c7a0478deab3c0590f70d3182eaf9aac83380da` |
+
+> **Note on Final Serving Model Artifact (`models/c5_lightgbm_final.joblib`)**:
+> The final serving model was fitted locally on the control laptop across all 8,000 C5 benchmark pairs using the exact hyperparameters established by the J1 benchmark sweep and cached T2 Dense embeddings (`cache/embeddings/c5_doc_emb.npy`). It is not an artifact produced or downloaded from Kaggle kernels. Its metadata and configuration are committed at `models/c5_lightgbm_final_meta.json`.
 
 ---
 
