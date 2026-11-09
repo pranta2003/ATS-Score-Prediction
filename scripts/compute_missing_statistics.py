@@ -354,12 +354,12 @@ def main():
     # -----------------------------------------------------------------
     print("\n--- Step 2d: Evaluating Within-JD Ranking ---", flush=True)
 
-    # Load pre-trained S2 resume-only OOF predictions (from resume embeddings only)
-    s2_res_model_cache = PROJECT_ROOT / "cache" / "s2_resume_only_oof_probs.npy"
+    # Load pre-trained S2 resume-only OOF predictions (from resume embeddings only, grouped by JD)
+    s2_res_model_cache = PROJECT_ROOT / "cache" / "s2_resume_only_oof_probs_jd_grouped.npy"
     if s2_res_model_cache.exists():
         s2_res_model_probs = np.load(s2_res_model_cache)
     else:
-        print("Training S2 resume-only LightGBM...", flush=True)
+        print("Training S2 resume-only LightGBM (grouped by jd_id)...", flush=True)
         meta_df = pd.read_parquet(PROJECT_ROOT / "cache" / "embeddings" / "c5_doc_meta.parquet")
         doc_embs = np.load(PROJECT_ROOT / "cache" / "embeddings" / "c5_doc_emb.npy")
         doc_emb_map = {row["text_id"]: doc_embs[int(row["array_idx"])] for _, row in meta_df.iterrows()}
@@ -544,23 +544,49 @@ def main():
 
     cal_s1_probs = np.zeros_like(s1_oof_probs)
     s1_temperatures = []
-    for tr_idx, val_idx in gkf_s1.split(s1_logits, y, groups=df["resume_id"]):
+    s1_outer_folds_detail = []
+    for k, (tr_idx, val_idx) in enumerate(gkf_s1.split(s1_logits, y, groups=df["resume_id"])):
         opt_t = fit_temperature(s1_logits[tr_idx], y[tr_idx])
         s1_temperatures.append(opt_t)
         scaled = s1_logits[val_idx] / opt_t
         exp_s = np.exp(scaled - np.max(scaled, axis=1, keepdims=True))
-        cal_s1_probs[val_idx] = exp_s / np.sum(exp_s, axis=1, keepdims=True)
+        p_val_cal = exp_s / np.sum(exp_s, axis=1, keepdims=True)
+        cal_s1_probs[val_idx] = p_val_cal
+        
+        raw_ece_k, _ = compute_ece(s1_oof_probs[val_idx], y[val_idx])
+        cal_ece_k, _ = compute_ece(p_val_cal, y[val_idx])
+        s1_outer_folds_detail.append({
+            "outer_fold": k,
+            "n_train": len(tr_idx),
+            "n_val": len(val_idx),
+            "temperature_fitted_on_train": round(float(opt_t), 4),
+            "raw_ece_val": round(float(raw_ece_k), 4),
+            "cal_ece_val": round(float(cal_ece_k), 4),
+        })
 
     ece_s1_cal, s1_cal_bins = compute_ece(cal_s1_probs, y)
 
     cal_s2_probs = np.zeros_like(s2_oof_probs)
     s2_temperatures = []
-    for tr_idx, val_idx in gkf_s2.split(s2_logits, y, groups=df["jd_id"]):
+    s2_outer_folds_detail = []
+    for k, (tr_idx, val_idx) in enumerate(gkf_s2.split(s2_logits, y, groups=df["jd_id"])):
         opt_t = fit_temperature(s2_logits[tr_idx], y[tr_idx])
         s2_temperatures.append(opt_t)
         scaled = s2_logits[val_idx] / opt_t
         exp_s = np.exp(scaled - np.max(scaled, axis=1, keepdims=True))
-        cal_s2_probs[val_idx] = exp_s / np.sum(exp_s, axis=1, keepdims=True)
+        p_val_cal = exp_s / np.sum(exp_s, axis=1, keepdims=True)
+        cal_s2_probs[val_idx] = p_val_cal
+        
+        raw_ece_k, _ = compute_ece(s2_oof_probs[val_idx], y[val_idx])
+        cal_ece_k, _ = compute_ece(p_val_cal, y[val_idx])
+        s2_outer_folds_detail.append({
+            "outer_fold": k,
+            "n_train": len(tr_idx),
+            "n_val": len(val_idx),
+            "temperature_fitted_on_train": round(float(opt_t), 4),
+            "raw_ece_val": round(float(raw_ece_k), 4),
+            "cal_ece_val": round(float(cal_ece_k), 4),
+        })
 
     ece_s2_cal, s2_cal_bins = compute_ece(cal_s2_probs, y)
 
@@ -572,8 +598,9 @@ def main():
             "raw_ece": round(ece_s1_raw, 4),
             "calibrated_ece": round(ece_s1_cal, 4),
             "outer_temperatures": [round(float(t), 4) for t in s1_temperatures],
-            "median_temperature": round(s1_med_temp, 2),
-            "mean_temperature": round(float(np.mean(s1_temperatures)), 2),
+            "per_outer_fold": s1_outer_folds_detail,
+            "median_temperature": round(s1_med_temp, 4),
+            "mean_temperature": round(float(np.mean(s1_temperatures)), 4),
             "delta_ece": round(float(ece_s1_cal - ece_s1_raw), 4),
             "reliability_table_raw": s1_bins,
         },
@@ -581,8 +608,9 @@ def main():
             "raw_ece": round(ece_s2_raw, 4),
             "calibrated_ece": round(ece_s2_cal, 4),
             "outer_temperatures": [round(float(t), 4) for t in s2_temperatures],
-            "median_temperature": round(s2_med_temp, 2),
-            "mean_temperature": round(float(np.mean(s2_temperatures)), 2),
+            "per_outer_fold": s2_outer_folds_detail,
+            "median_temperature": round(s2_med_temp, 4),
+            "mean_temperature": round(float(np.mean(s2_temperatures)), 4),
             "serving_default_temperature": round(s2_med_temp, 2),
             "delta_ece": round(float(ece_s2_cal - ece_s2_raw), 4),
             "reliability_table_raw": s2_bins,
